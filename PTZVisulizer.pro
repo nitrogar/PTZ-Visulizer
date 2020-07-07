@@ -16,13 +16,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    drone.cpp \
     main.cpp \
     mainwindow.cpp \
+    marker.cpp \
     ptzelement.cpp
 
 HEADERS += \
+    drone.h \
     mainwindow.h \
     Packet.h \
+    marker.h \
     ptzelement.h
 
 FORMS += \
@@ -32,3 +36,7 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    PTZCircle.qml \
+    main.qml
