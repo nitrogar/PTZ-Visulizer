@@ -5,6 +5,7 @@
 #include <QList>
 #include <QGeoCoordinate>
 #include "ptzelement.h"
+#include "drone.h"
 class Marker : public QAbstractListModel
 {
     Q_OBJECT
@@ -16,7 +17,9 @@ class Marker : public QAbstractListModel
     };
 public:
     explicit Marker(QObject *parent = nullptr);
-    enum{MarkerPostion = Qt::UserRole , Vertex1,Vertex2,Vertex3,Radius,CenterLine,CircleColor ,Number,Up,ViewLine,Azimuth};
+    enum{MarkerPostion = Qt::UserRole , Vertex1,Vertex2,Vertex3,Radius,CenterLine,CircleColor ,Number,Up,ViewLine,Azimuth,Elevation,
+           Theta,R, Phi,Ro,CaclulatedLine,DronePostion,DroneVector,LeftLine,RightLine , HalfRightLine,HalfLeftLine
+        };
     // Basic functionality:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
@@ -29,14 +32,15 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
     void update(int n ,int role);
-
-
     void addMarker(int row, PTZElement * p);
     void removeMarker(int row);
     QString current() const;
+    void setDrone(Drone * d);
+    void updateDrone();
+    void removeMarkerAll();
 private:
     QList<PTZElement *> PTZ;
-
+    Drone * drone;
 };
 
 #endif // MARKER_H

@@ -48,6 +48,37 @@ QVariant Marker::data(const QModelIndex &index, int role) const
     else if(role == Azimuth)
         return QVariant::fromValue(PTZ[index.row()]->getAzimuthAngle());
 
+    else if(role == Phi)
+        return QVariant::fromValue(PTZ[index.row()]->vectorToDrone(drone).phiToTarget);
+
+    else if(role == Elevation)
+        return QVariant::fromValue(PTZ[index.row()]->getElevationAngle());
+
+    else if(role == Ro)
+        return QVariant::fromValue(PTZ[index.row()]->vectorToDrone(drone).roToTarget);
+
+    else if(role == Theta)
+        return QVariant::fromValue(PTZ[index.row()]->vectorToDrone(drone).thetaToTarget);
+    else if(role == R)
+        return QVariant::fromValue(PTZ[index.row()]->vectorToDrone(drone).r);
+    else if(role == DronePostion)
+        return QVariant::fromValue(drone->getPosition());
+
+    else if(role == DroneVector)
+        return QVariant::fromValue(PTZ[index.row()]->caclculatedEndPoint(drone));
+
+    else if(role == LeftLine)
+        return QVariant::fromValue(PTZ[index.row()]->LeftViewPoint());
+
+    else if(role == RightLine)
+        return QVariant::fromValue(PTZ[index.row()]->RightViewPoint());
+
+    else if(role == HalfLeftLine)
+        return QVariant::fromValue(PTZ[index.row()]->HalfLeftViewPoint());
+
+    else if(role == HalfRightLine)
+        return QVariant::fromValue(PTZ[index.row()]->HalfRightViewPoint());
+
     return QVariant();
 }
 
@@ -65,6 +96,20 @@ QHash<int, QByteArray> Marker::roleNames() const
     roles[Up] = "up";
     roles[ViewLine] = "viewLine";
     roles[Azimuth] = "azimuth";
+    roles[Elevation] = "elevatoin";
+    roles[Phi] = "phi";
+    roles[Ro] = "ro";
+    roles[Theta] = "theta";
+
+    roles[CaclulatedLine] = "caclulatedLine";
+    roles[DronePostion] = "dronePosition";
+    roles[DroneVector] = "droneVector";
+    roles[RightLine] = "rightLine";
+    roles[LeftLine] = "leftLine";
+    roles[R] = "r";
+    roles[HalfRightLine] = "halfRightLine";
+    roles[HalfLeftLine] = "halfLeftLine";
+
     return roles;
 }
 
@@ -80,6 +125,21 @@ bool Marker::setData(const QModelIndex &index, const QVariant &value, int role)
 
 void Marker::update(int n ,int role){
     emit dataChanged(index(n),index(n),QVector<int>() << role);
+
+}
+
+void Marker::updateDrone(){
+
+    emit dataChanged(index(0),index(0),QVector<int>() << DronePostion);
+   // emit dataChanged(index(0),index(0),QVector<int>() << DroneVector);
+
+}
+
+void Marker::removeMarkerAll()
+{
+     beginRemoveRows(QModelIndex(),0,PTZ.count());
+     PTZ.clear();
+     endRemoveRows();
 
 }
 Qt::ItemFlags Marker::flags(const QModelIndex &index) const
@@ -109,4 +169,9 @@ QString Marker::current() const
 {
 
     return "Current";
+}
+
+void Marker::setDrone(Drone *d)
+{
+    this->drone = d;
 }

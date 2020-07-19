@@ -8,6 +8,8 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include <QGeoCoordinate>
+#include <cmath>
+class Drone;
 class PTZElement
 {
 
@@ -16,6 +18,10 @@ public:
         double thetaToTarget;
         double phiToTarget;
         double roToTarget;
+        double r;
+        bool isNull(){
+            return thetaToTarget == 0 && phiToTarget == 0 && roToTarget == 0;
+        }
     };
 
 
@@ -25,13 +31,23 @@ public:
     void setAlt(float lat);
     void setRange(float lng);
     void setref(float lat);
+    void setFOV(float fov);
     void setPhi(float lng);
     void setAzimuthAngle(float angle);
     void setElevationAngle(float angle);
+    void setTargetAzimuthAngle(float angle);
+    void setTargetElevationAngle(float angle);
     float getLat();
     float getLong();
     float getElevationAngle();
     float getAzimuthAngle();
+    QGeoCoordinate LeftViewPoint();
+    QGeoCoordinate RightViewPoint();
+    QGeoCoordinate HalfLeftViewPoint();
+    QGeoCoordinate HalfRightViewPoint();
+    Vector3d vectorToDrone(Drone * d);
+    QGeoCoordinate FindEndPointWithRefrece(double angle,double r);
+    QGeoCoordinate caclculatedEndPoint(Drone * drone);
     QGeoCoordinate caclculatedEndPoint(QGeoCoordinate drone);
     QGeoCoordinate getPostion();
     QGeoCoordinate getEndLine();
@@ -46,6 +62,7 @@ public:
     double longitude;
     double altitude;
     double range;
+    double fov;
     double angleFromNorth;
     double Phi;
     double azimuth;
@@ -55,8 +72,12 @@ public:
 
 private:
 
-       const double DEG_TO_RAD = 0.017453292519943295769236907684886;
-       const double EARTH_RADIUS_IN_METERS = 6372797.560856;
+       //const double DEG_TO_RAD = 0.017453292519943295769236907684886;
+       const double DEG_TO_RAD = M_PI/180.0f;
+
+       //const double EARTH_RADIUS_IN_METERS = 6372797.560856;
+       const double EARTH_RADIUS_IN_METERS = 6378137;
+
        QGroupBox *root;
        QVBoxLayout *verticalLayout_9;
        QHBoxLayout *horizontalLayout;
@@ -92,6 +113,16 @@ private:
        QHBoxLayout *horizontalLayout_12;
        QLabel *PTZlabelcenterLine;
        QLineEdit *PTZCenterLine;
+
+
+       QHBoxLayout *horizontalLayout_15;
+       QLabel *PTZlabelTargetAzimuth;
+       QLineEdit *PTZTargetAzimuth;
+
+
+       QHBoxLayout *horizontalLayout_16;
+       QLabel *PTZlabelTargetElevation;
+       QLineEdit *PTZTargetElevation;
 };
 
 #endif // PTZELEMENT_H

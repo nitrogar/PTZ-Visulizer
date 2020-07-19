@@ -26,13 +26,13 @@ Rectangle{
 
         //}
 
-        MapItemView{
+        /*MapItemView{
             model: mapMarker
             delegate: MapQuickItem{
                     coordinate:  model.position
                     sourceItem: Text {
                         z: 1000
-                        text: model.number + "--" + model.azimuth
+                        text: model.number + "\n" + model.azimuth + "\n" + "Phi :" + model.phi + "\n" + "Theta :" + model.theta + "\n" + "Ro :" + model.ro + "\n" + "R :" + model.r
 
 
                     }
@@ -40,25 +40,22 @@ Rectangle{
 
         }
 
-
-        /*MapItemView{
+*/
+        MapItemView{
             model: mapMarker
-            delegate: MapCircle{
-                    center: model.position
-                    radius: 100
-                    border.width: 6
-                    color:'red'
+            delegate: PTZCircle{
+                    coordinate: model.position
             }
 
         }
-*/
+
         MapItemView{
             model:mapMarker
             delegate: MapCircle{
                 radius: model.raduis
                 //color: model.circleColor
                 center: model.position
-                border.width: 6;
+                border.width: 1;
 
             }
         }
@@ -68,17 +65,7 @@ Rectangle{
             delegate: MapPolyline{
                  line.width: 3
                  line.color: 'green'
-                 path: [model.position , model.centerLine]
-            }
-
-        }
-
-        MapItemView{
-            model: mapMarker
-            delegate: MapPolyline{
-                 line.width: 3
-                 line.color: 'red'
-                 path: [model.position , model.up]
+                 path: [model.position , model.droneVector]
             }
 
         }
@@ -87,11 +74,31 @@ Rectangle{
         MapItemView{
             model: mapMarker
             delegate: MapPolyline{
-                 line.width: 3
-                 line.color: 'black'
+                 line.width: 1
+                 line.color: '#DC143C'
                  path: [model.position , model.viewLine]
             }
 
+        }
+
+        MapItemView{
+            model: mapMarker
+            delegate: MapPolygon {
+                color: 'red'
+                opacity: 0.5
+                path: [ model.position , model.leftLine , model.halfLeftLine , model.viewLine , model.halfRightLine ,model.rightLine ]
+            }
+
+        }
+
+        MapItemView{
+            model:mapMarker
+            delegate: Drone{
+               coordinate: model.dronePosition
+               //radius: 9
+              // color : 'white'
+               // coordinate: model.dronePosition
+            }
         }
 
 
