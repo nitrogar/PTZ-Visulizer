@@ -9,7 +9,7 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include <QGeoCoordinate>
-
+#include "dronepath.h"
 class Drone {
 
 public:
@@ -48,8 +48,18 @@ private:
     QLineEdit *latEdit;
     QLineEdit *lngEdit;
     QLineEdit *altEdit;
-    location current;
+    QGeoCoordinate current;
     Vector velocity;
+    //DronePath path;
+    /**
+    mainWin.cpp remove droen code with simulator
+    add drone.addCp()
+    add new model for cp
+    add curve function
+    check conncetivity
+
+
+*/
 
 
 };

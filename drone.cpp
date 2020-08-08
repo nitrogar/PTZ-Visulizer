@@ -8,31 +8,31 @@
 #include <QtWidgets/QWidget>
 #include <QGeoCoordinate>
 double Drone::getLatitude() const {
-    return current.latitude;
+    return current.latitude();
 }
 
 void Drone::setLatitude(double latitude) {
-    current.latitude = latitude;
+    current.setLatitude(latitude);
     this->latEdit->setText(QString::number(latitude));
 }
 
 double Drone::getLongitude() const {
-    return current.longitude;
+    return current.longitude();
 
 }
 
 void Drone::setLongitude(double longitude) {
-    current.longitude = longitude;
+    current.setLongitude(longitude);
     this->lngEdit->setText(QString::number(longitude));
 
 }
 
 double Drone::getAltitude() const {
-    return current.altitude;
+    return current.altitude();
 }
 
 void Drone::setAltitude(double altitude) {
-    current.altitude = altitude;
+    current.setAltitude(altitude);
     this->altEdit->setText(QString::number(altitude));
 
 }
@@ -63,22 +63,22 @@ void Drone::setZVec(double zVec) {
 
 QGeoCoordinate Drone::getPosition()
 {
-    return QGeoCoordinate(current.latitude,current.longitude);
+    return current;
 }
 
 Drone::Drone(double latitude, double longitude, double altitude, double xVec, double yVec, double zVec) {
-    current.altitude = altitude;
-    current.longitude = longitude;
-    current.latitude = latitude;
+    current.setAltitude(altitude);
+    current.setLongitude(longitude);
+    current.setLatitude(latitude);
     velocity.x_vec = xVec;
     velocity.y_vec = yVec;
     velocity.z_vec = zVec;
 }
 
 Drone::Drone(double latitude, double longitude, double altitude):Drone(){
-    current.altitude = altitude;
-    current.longitude = longitude;
-    current.latitude = latitude;
+    current.setAltitude(altitude);
+    current.setLongitude(longitude);
+    current.setLatitude(latitude);
 }
 
 Drone::Drone() {

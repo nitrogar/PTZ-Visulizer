@@ -9,7 +9,14 @@
 #include <QtWidgets/QWidget>
 #include <QGeoCoordinate>
 #include <cmath>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QtCharts/QChart>
+#include <QtCharts/QLineSeries>
+#include <QtCharts/QChartView>
+#include <QValueAxis>
 class Drone;
+class AutoDrone;
 class PTZElement
 {
 
@@ -23,6 +30,15 @@ public:
             return thetaToTarget == 0 && phiToTarget == 0 && roToTarget == 0;
         }
     };
+
+   struct Factors{
+    float Azm;
+    float Ele;
+    bool isNull(){
+        return Azm == 0 && Ele;
+    }
+
+   };
 
 
     PTZElement(int id);
@@ -45,9 +61,9 @@ public:
     QGeoCoordinate RightViewPoint();
     QGeoCoordinate HalfLeftViewPoint();
     QGeoCoordinate HalfRightViewPoint();
-    Vector3d vectorToDrone(Drone * d);
+    Vector3d vectorToDrone(AutoDrone * d);
     QGeoCoordinate FindEndPointWithRefrece(double angle,double r);
-    QGeoCoordinate caclculatedEndPoint(Drone * drone);
+    QGeoCoordinate caclculatedEndPoint(AutoDrone * drone);
     QGeoCoordinate caclculatedEndPoint(QGeoCoordinate drone);
     QGeoCoordinate getPostion();
     QGeoCoordinate getEndLine();
@@ -57,6 +73,31 @@ public:
 
     Vector3d getVectorTo(double lat,double lng,double alt);
     float haversine(double lat0, double lng0,double lat1, double lng1);
+
+    QGeoCoordinate positionAt(AutoDrone * d ,float t);
+    QVector3D positionXYZAt(AutoDrone * d ,float t);
+    void addToHistory(QGeoCoordinate & g);
+    QGeoCoordinate cartToGeo(QVector3D & v);
+    QVector3D  GeoTocart(QGeoCoordinate & g);
+    QVector3D  velocity(float t);
+    Factors  caclulateFastes(AutoDrone *d,float dist);
+    Factors  droneScan(AutoDrone * d,float timeElapsed);
+    void updateVelocityParameters(float elapsed,float dist);
+    float motionFunction(float dd);
+    float  calculateBearing(float x , float y);
+    float calculateOrbitalVelocity(QPointF o ,QPointF a,QPointF b);
+    double cubeRoot(double x);
+    bool approx(float a ,float b);
+    double * sloveCubic(float a,float b,float c,float d,float e);
+
+
+
+
+    void initScene();
+    void initChart();
+    void addPredictPoint(QPointF & p);
+    void addRealPoint(QPointF & p);
+    void clearPrePath();
     int  id;
     double latitude;
     double longitude;
@@ -67,9 +108,28 @@ public:
     double Phi;
     double azimuth;
     double elevation;
+    double azimuthAnglurSpeed;
+    double elevationAnglurSpeed;
+    float oldAzimuth = 0;
     QString circleColor;
     Vector3d toTarget;
-
+    QVector<QVector3D> historyXYZ;
+    QVector<QGeoCoordinate> historyGeo;
+    QVector<float> param {0,0,0};
+    QGraphicsScene scene;
+    QPainterPath painterPath;
+    QPainterPath dronePainterPath;
+    QGraphicsPathItem dronePath;
+    QGraphicsPathItem predictedPath;
+    QtCharts::QChart rmsChart;
+    float total_time = 0;
+    QGeoCoordinate droneEndpoint;
+    QtCharts::QLineSeries errAzimuthSerise;
+    QtCharts::QLineSeries errElevationSerise;
+    QtCharts::QLineSeries errSpeedSerise;
+    QtCharts::QValueAxis AX;
+    QtCharts::QValueAxis AY;
+    bool isfirstPointInPredection = true;
 private:
 
        //const double DEG_TO_RAD = 0.017453292519943295769236907684886;

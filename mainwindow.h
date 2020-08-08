@@ -7,6 +7,9 @@
 #include "ptzelement.h"
 #include "marker.h"
 #include <vector>
+#include "autodrone.h"
+#include <QTimer>
+#include <QtCharts>
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -20,12 +23,22 @@ public:
     ~MainWindow();
 
 public slots :
-      void sendCustomePacket();
-      void connectButtonStateMachine();
-      void retrevePTZsInformation();
+    void sendCustomePacket();
+    void connectButtonStateMachine();
+    void retrevePTZsInformation();
      // void addMarker();
-      void updateRefreshRate();
-      void toggleAutoMode();
+    void updateRefreshRate();
+    void toggleAutoMode();
+    //  void updateCP(int n);
+    void setSceneXY();
+    void setSceneZ();
+    void setSceneSpeed();
+    void startCurve();
+    void stopCurve();
+    void resetCurve();
+    void autoMode();
+    void prevPTZ();
+    void nextPTZ();
 
 signals :
       void connctionStatusChanged(int status);
@@ -42,8 +55,14 @@ private:
     int fdSocket;
     std::vector<PTZElement *> PTZs;
     int refreshRateMS;
+    int currentPTZ = 0;
     Marker mapMarker;
     Drone * drone;
+    AutoDrone * a_drone;
+    QTimer tick;
+    QGraphicsView view;
+    QtCharts::QChartView chartView;
+
 private:
       int disconnectFromServer();
       int connectToServer();
@@ -54,7 +73,6 @@ private:
       void deletePTZs();
       Packet::pktFeedback sendPacket(Packet::pktCommand * cmd);
       void addPTZ();
-      void autoMode();
       void setTargetAngle(int n,RotationDirection dir ,float angle);
       int requestNumberOfPTZs();
       float requestPTZLongitude(int n);
@@ -74,6 +92,14 @@ private:
       float requestSetTargetAngle(int n,RotationDirection dir, char angle , bool isUpper);
       float requestAddTargetAngle(int n,RotationDirection dir, char angle , bool isUpper);
       float requestTargetAngle(int n,RotationDirection dir);
+      float requestLoadTargetAngle(int n,RotationDirection dir);
+      float requestSetSpeedFactor(int n,char k,RotationDirection dir);
+      float requestSetSpeed(int n,RotationDirection dir, char sp , bool isUpper);
+      float requestLoadSpeed(int n , RotationDirection dir);
+      void setPTZSpeed(int n,RotationDirection dir ,float angle);
+
+      void setPTZScene(QGraphicsScene &sc);
+      void setPTZChart(QtCharts::QChart & ch);
 
 
 };

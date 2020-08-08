@@ -47,25 +47,25 @@ QVariant Marker::data(const QModelIndex &index, int role) const
 
     else if(role == Azimuth)
         return QVariant::fromValue(PTZ[index.row()]->getAzimuthAngle());
-
+/*
     else if(role == Phi)
         return QVariant::fromValue(PTZ[index.row()]->vectorToDrone(drone).phiToTarget);
-
-    else if(role == Elevation)
-        return QVariant::fromValue(PTZ[index.row()]->getElevationAngle());
-
     else if(role == Ro)
         return QVariant::fromValue(PTZ[index.row()]->vectorToDrone(drone).roToTarget);
-
     else if(role == Theta)
         return QVariant::fromValue(PTZ[index.row()]->vectorToDrone(drone).thetaToTarget);
     else if(role == R)
         return QVariant::fromValue(PTZ[index.row()]->vectorToDrone(drone).r);
     else if(role == DronePostion)
         return QVariant::fromValue(drone->getPosition());
-
+*/
     else if(role == DroneVector)
-        return QVariant::fromValue(PTZ[index.row()]->caclculatedEndPoint(drone));
+        return QVariant::fromValue(PTZ[index.row()]->droneEndpoint);
+
+    else if(role == Elevation)
+        return QVariant::fromValue(PTZ[index.row()]->getElevationAngle());
+
+
 
     else if(role == LeftLine)
         return QVariant::fromValue(PTZ[index.row()]->LeftViewPoint());
@@ -78,6 +78,17 @@ QVariant Marker::data(const QModelIndex &index, int role) const
 
     else if(role == HalfRightLine)
         return QVariant::fromValue(PTZ[index.row()]->HalfRightViewPoint());
+
+    else if(role == CP1)
+        return QVariant::fromValue(ad->getlatLonCurve()->getGeoPoint(0));
+    else if(role == CP2)
+        return QVariant::fromValue(ad->getlatLonCurve()->getGeoPoint(1));
+    else if(role == CP3)
+        return QVariant::fromValue(ad->getlatLonCurve()->getGeoPoint(2));
+    else if(role == CP4)
+        return QVariant::fromValue(ad->getlatLonCurve()->getGeoPoint(3));
+    else if(role == CP5)
+        return QVariant::fromValue(ad->getlatLonCurve()->getGeoM());
 
     return QVariant();
 }
@@ -109,6 +120,11 @@ QHash<int, QByteArray> Marker::roleNames() const
     roles[R] = "r";
     roles[HalfRightLine] = "halfRightLine";
     roles[HalfLeftLine] = "halfLeftLine";
+    roles[CP1] = "cp1";
+    roles[CP2] = "cp2";
+    roles[CP3] = "cp3";
+    roles[CP4] = "cp4";
+    roles[CP5] = "cp5";
 
     return roles;
 }
@@ -131,6 +147,14 @@ void Marker::update(int n ,int role){
 void Marker::updateDrone(){
 
     emit dataChanged(index(0),index(0),QVector<int>() << DronePostion);
+
+
+   // emit dataChanged(index(0),index(0),QVector<int>() << DroneVector);
+
+}
+void Marker::updateCP(int id){
+   // qDebug() << id;
+    emit dataChanged(index(0),index(0),QVector<int>() << CP1 + id);
    // emit dataChanged(index(0),index(0),QVector<int>() << DroneVector);
 
 }

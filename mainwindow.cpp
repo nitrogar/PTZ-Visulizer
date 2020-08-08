@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <thread>
 #include <QGeoCoordinate>
+#include <QGraphicsScene>
+#include "controlepoint2.h"
 #include <atomic>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,14 +24,47 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     connect(ui->SendPushbutton,SIGNAL(clicked(bool)),this,SLOT(sendCustomePacket()));
+    connect(ui->XY,SIGNAL(clicked(bool)),this,SLOT(setSceneXY()));
+    connect(ui->Z,SIGNAL(clicked(bool)),this,SLOT(setSceneZ()));
+    connect(ui->Speed,SIGNAL(clicked(bool)),this,SLOT(setSceneSpeed()));
+    connect(ui->startCurve,SIGNAL(clicked(bool)),this,SLOT(startCurve()));
+    connect(ui->stopCurve,SIGNAL(clicked(bool)),this,SLOT(stopCurve()));
+    connect(ui->resetCurve,SIGNAL(clicked(bool)),this,SLOT(resetCurve()));
+
     connect(ui->connectPushButton,SIGNAL(clicked(bool)),this,SLOT(connectButtonStateMachine()));
     connect(ui->updatePTZs,SIGNAL(clicked(bool)),this ,SLOT(retrevePTZsInformation()));
    // connect(ui->addMarker, SIGNAL(clicked(bool)), this , SLOT(addMarker()));
     connect(ui->RefreshRate,SIGNAL(editingFinished()),this,SLOT(updateRefreshRate()));
     connect(ui->autoModeToggle,SIGNAL(clicked(bool)),this ,SLOT(toggleAutoMode()));
+/*
+    QGraphicsScene * scene = new QGraphicsScene();
+    QGeoCoordinate pos = QGeoCoordinate(24.691192, 46.699733);
+    ControlePoint *cp = new ControlePoint(1,pos,pos);
+    scene->addItem(cp);
+    ui->latLonGraphicsView->setScene(scene);
 
+*/
     this->refreshRateMS = 100;
-    this->autoRefreshThread = std::thread(&MainWindow::autoMode,this);
+    this->a_drone = new AutoDrone();
+    a_drone->setPathGeoCenter(QGeoCoordinate(24.684353, 46.695205));
+    mapMarker.setAutoDrone(a_drone);
+    QVBoxLayout * vb = new QVBoxLayout();
+    vb->addWidget(a_drone->getGraphicWidget());
+    ui->DroneWidget->setLayout(vb);
+    ui->PTZsScrollArea->layout()->addWidget(a_drone->getInfoWidget());
+
+
+    QVBoxLayout * vb2 = new QVBoxLayout();
+    ui->PTZChart->setLayout(vb2);
+    ui->PTZChart->layout()->addWidget(&view);
+    ui->PTZChart->layout()->addWidget(&chartView);
+    connect(a_drone,SIGNAL(geoPosChanged(int)),&mapMarker,SLOT(updateCP(int)));
+    connect(&tick, SIGNAL(timeout()), this, SLOT(autoMode()));
+    connect(ui->PrevPTZ,SIGNAL(clicked(bool)),this ,SLOT(prevPTZ()));
+    connect(ui->NextPTZ,SIGNAL(clicked(bool)),this ,SLOT(nextPTZ()));
+
+// add PTZChart , do the button connect , do slot to switch ptz , move chartView and grahics view from the ptz to mainwin to just setScence , set Chart
+    // PLUS minus movment dir not im
 
 
 }
@@ -43,7 +78,8 @@ void MainWindow::connectButtonStateMachine(){
         initDrone();
         initPTZs();
 
-        this->autoModeState.store(On);
+
+        tick.start(refreshRateMS);
         //this->autoRefreshThread = std::thread(&MainWindow::autoMode,this);
     }
     else {
@@ -51,7 +87,6 @@ void MainWindow::connectButtonStateMachine(){
         this->connected = ConnectionStatus::Off;
         ui->connectPushButton->setText("Connect");
         deletePTZs();
-        this->autoModeState.store(Off);
     }
 }
 
@@ -172,50 +207,41 @@ void MainWindow::addPTZ(){
 
 void MainWindow::autoMode()
 {
-    qDebug() << QString("Start Auto Mode");
-    while(autoModeState.load() == On || true){
-        if(this->connected == ConnectionStatus::On){
+    if(this->connected == ConnectionStatus::On){
              retrevePTZsInformation();
-
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(this->refreshRateMS));
-
+             a_drone->advanceDefult();
     }
-    qDebug() << QString("NOT");
 
 }
 
-void MainWindow::setTargetAngle(int n,RotationDirection dir ,float angle)
+void MainWindow::prevPTZ()
 {
+   if(PTZs.empty()) return;
+   currentPTZ--;
+
+  if(currentPTZ > PTZs.size()) currentPTZ = PTZs.size() - 1;
+  if(currentPTZ < 0) currentPTZ = 0;
+
+   setPTZScene(PTZs[currentPTZ]->scene);
+   setPTZChart(PTZs[currentPTZ]->rmsChart);
+
+   ui->PTZNumber->setText(QString::number(currentPTZ));
 
 
-    double upper , lower , delta;
 
-    lower = modf(angle , &upper);
-    lower *= 100;
-    lower = (int) lower;
+}
 
-    requestSetTargetAngle(n,dir,(char)lower,false);
+void MainWindow::nextPTZ()
+{
+    if(PTZs.empty()) return;
+    currentPTZ++;
 
-    if(upper > 127){
-        requestSetTargetAngle(n,dir,(char)0,true);
-        delta = (int) upper;
-        // qDebug() << QString("delta sup %0 id %1").arg(delta).arg(n);
-        while(delta > 127){
-            requestAddTargetAngle(n,dir,(char)127,true);
+   if(currentPTZ >= PTZs.size()) currentPTZ = PTZs.size() - 1;
+   if(currentPTZ < 0) currentPTZ = 0;
 
-
-            delta -= 127;
-        }
-       // qDebug() << QString("delta last %0 id %1").arg(delta).arg(n);
-
-        requestAddTargetAngle(n,dir,(char)delta,true);
-    }
-
-    else requestSetTargetAngle(n,dir,(char)upper, true);
-
-
+    setPTZScene(PTZs[currentPTZ]->scene);
+    setPTZChart(PTZs[currentPTZ]->rmsChart);
+    ui->PTZNumber->setText(QString::number(currentPTZ));
 
 
 }
@@ -238,6 +264,8 @@ void MainWindow::initPTZs(){
         PTZs[i]->setAzimuthAngle(requestPTZRotationAngle(n,RotationDirection::Azimuth));
         PTZs[i]->setElevationAngle(requestPTZRotationAngle(n,RotationDirection::Elevation));
         PTZs[i]->setFOV(requestPTZFOV(i+1));
+        PTZs[i]->azimuthAnglurSpeed = requestPTZMaxSpeed(i+1,Azimuth);
+        PTZs[i]->elevationAnglurSpeed = requestPTZMaxSpeed(i+1,Elevation);
         setTargetAngle(i+1,Elevation,25);
         setTargetAngle(i+1,Azimuth,100);
         mapMarker.addMarker(i,PTZs[i]);
@@ -247,6 +275,12 @@ void MainWindow::initPTZs(){
 
 void MainWindow::initDrone()
 {
+
+
+
+
+    //Auto one
+
     this->drone = new Drone(requestDroneLatitude(0),requestDroneLongitude(0),requestDroneAltitude(0));
     mapMarker.setDrone(this->drone);
     ui->PTZsScrollArea->layout()->addWidget(this->drone->getRoot());
@@ -264,34 +298,42 @@ void MainWindow::deletePTZs(){
 void MainWindow::retrevePTZsInformation(){
     int n;
     char r;
-    PTZElement::Vector3d vec = {};
+    PTZElement::Factors f = {};
     for(int i = 0 ; i <  PTZs.size() ; i++){
         n = i+1;
 
 
         PTZs[i]->setAzimuthAngle(requestPTZRotationAngle(n,RotationDirection::Azimuth));
         PTZs[i]->setElevationAngle(requestPTZRotationAngle(n,RotationDirection::Elevation));
-        vec = PTZs[i]->vectorToDrone(drone);
+        f = PTZs[i]->droneScan(a_drone,tick.interval());
 
-        if(!vec.isNull()){
+        setPTZSpeed(n,Azimuth,f.Azm);
+        setPTZSpeed(n,Elevation,f.Ele);
+
+        /*
+        if(!f.isNull()){
             float azm = requestTargetAngle(n,Azimuth);
             float ele = requestTargetAngle(n,Elevation);
-            if(abs(ele - vec.phiToTarget) > 0.01){
-                setTargetAngle(n,Elevation,vec.phiToTarget);
+            if(abs(ele - f.Ele) > 0.01){
+               // setTargetAngle(n,Elevation,f.phiToTarget);
+                requestSetSpeedFactor(n,f.Ele,Elevation);
                 PTZs[i]->setTargetElevationAngle(ele);
             }
 
-            if(abs(azm - vec.thetaToTarget) > 0.01){
-                setTargetAngle(n,Azimuth,vec.thetaToTarget);
-                PTZs[i]->setTargetAzimuthAngle(azm);
+            if(abs(azm - f.Azm) > 0.01){
 
-               // qDebug() << QString("setting %0 Target Azimuth : %1  Elevation %2 .").arg(n).arg(vec.thetaToTarget).arg(vec.phiToTarget);
-               // qDebug() << QString("id %0 requset az %1 ele %2").arg(n).arg(requestTargetAngle(n,Azimuth)).arg(requestTargetAngle(n,Elevation));
+               // setTargetAngle(n,Azimuth,vec.thetaToTarget);
+                PTZs[i]->setTargetAzimuthAngle(azm);
+                requestSetSpeedFactor(n,f.Azm,Azimuth);
+
+               // qDebug() << QString("setting %0 Target Azimuth : %1  current: %2  .").arg(n).arg(f.Azm).arg(azm);
+                // qDebug() << QString("id %0 requset az %1 ele %2").arg(n).arg(requestTargetAngle(n,Azimuth)).arg(requestTargetAngle(n,Elevation));
             }
 
+       }
+        */
 
 
-        }
 
 
         mapMarker.update(i,mapMarker.ViewLine);
@@ -299,6 +341,7 @@ void MainWindow::retrevePTZsInformation(){
         mapMarker.update(i,mapMarker.RightLine);
         mapMarker.update(i,mapMarker.DroneVector);
     }
+    /*
     double lat = requestDroneLatitude(0);
     double lng = requestDroneLongitude(0);
     double alt = requestDroneAltitude(0);
@@ -320,8 +363,8 @@ void MainWindow::retrevePTZsInformation(){
 
     final = PTZs[3]->FindEndPoint(45,40);
     qDebug() << QString("45 Lat : %1 , Long : %2 , final lat : %3 final lng : %4").arg(PTZs[3]->getLat()).arg(PTZs[3]->getLong()).arg(final.latitude()).arg(final.longitude());
-*/
     mapMarker.updateDrone();
+*/
 
 }
 
@@ -334,6 +377,36 @@ void MainWindow::updateRefreshRate()
 void MainWindow::toggleAutoMode()
 {
     this->autoModeState.store(this->autoModeState.load() == On ? Off : On);
+}
+
+void MainWindow::setSceneXY()
+{
+    a_drone->setScene(AutoDrone::XY);
+}
+
+void MainWindow::setSceneZ()
+{
+    a_drone->setScene(AutoDrone::Z);
+}
+
+void MainWindow::setSceneSpeed()
+{
+    a_drone->setScene(AutoDrone::SpeedCurve);
+}
+
+void MainWindow::startCurve()
+{
+    tick.start(100);
+}
+
+void MainWindow::stopCurve()
+{
+    tick.stop();
+}
+
+void MainWindow::resetCurve()
+{
+    a_drone->setTime(0);
 }
 
 
@@ -444,6 +517,24 @@ float MainWindow::requestSetTargetAngle(int n,RotationDirection dir, char angle 
 
     return fed.data;
 }
+
+float MainWindow::requestSetSpeed(int n,RotationDirection dir, char sp , bool isUpper){
+    Packet::pktCommand cmd;
+    Packet::pktFeedback fed;
+    cmd.cmd = Packet::Command::WRITE;
+    cmd.peripheral = n;
+    cmd.peripheral_function = isUpper ? (dir == Elevation ? Packet::PeripheralFunction::SET_ELEVATION_SPEED_UPPER : Packet::PeripheralFunction::SET_AZIMUTH_SPEED_UPPER)
+                                      : (dir == Elevation ? Packet::PeripheralFunction::SET_ELEVATION_SPEED_LOWER : Packet::PeripheralFunction::SET_AZIMUTH_SPEED_LOWER) ;
+    cmd.action = sp;
+
+    fed = sendPacket(&cmd);
+    while(!checkPacketValidaty(&cmd,&fed)){
+        qDebug() << QString("Resend");
+        fed = sendPacket(&cmd);
+    }
+
+    return fed.data;
+}
 float MainWindow::requestAddTargetAngle(int n,RotationDirection dir, char angle , bool isUpper){
     Packet::pktCommand cmd;
     Packet::pktFeedback fed;
@@ -478,6 +569,59 @@ float MainWindow::requestTargetAngle(int n, MainWindow::RotationDirection dir)
     }
 
     return fed.data;
+}
+
+float MainWindow::requestLoadTargetAngle(int n, MainWindow::RotationDirection dir)
+{
+    Packet::pktCommand cmd;
+    Packet::pktFeedback fed;
+    cmd.cmd = Packet::Command::WRITE;
+    cmd.peripheral = n;
+    cmd.peripheral_function = dir == Azimuth ? Packet::PeripheralFunction::LOAD_TARGET_AZIMUTH : Packet::PeripheralFunction::LOAD_TARGET_ELEVATION;
+    cmd.action = 0;
+
+    fed = sendPacket(&cmd);
+    while(!checkPacketValidaty(&cmd,&fed)){
+        qDebug() << QString("Resend");
+        fed = sendPacket(&cmd);
+    }
+
+
+    return fed.data;
+
+}
+
+float MainWindow::requestSetSpeedFactor(int n, char k, MainWindow::RotationDirection dir)
+{
+
+    Packet::pktCommand cmd;
+    Packet::pktFeedback fed;
+    cmd.cmd = Packet::Command::WRITE;
+    cmd.peripheral = n;
+    cmd.peripheral_function =  dir == Azimuth ? Packet::PeripheralFunction::SET_AZIMUTH_SPEED_FACTOR : Packet::PeripheralFunction::SET_ELEVATION_SPEED_FACTOR ;
+    cmd.action = k;
+
+    fed = sendPacket(&cmd);
+    while(!checkPacketValidaty(&cmd,&fed)){
+        qDebug() << QString("Resend");
+        fed = sendPacket(&cmd);
+    }
+
+    return fed.data;
+}
+
+void MainWindow::setPTZScene(QGraphicsScene &sc)
+{
+    view.setScene(&sc);
+    view.setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+}
+
+void MainWindow::setPTZChart(QChart &ch)
+{
+    chartView.setChart(&ch);
+    chartView.setRenderHint(QPainter::Antialiasing);
+    chartView.setRubberBand(QChartView::RectangleRubberBand);
 }
 
 float MainWindow::requestPTZAltitude(int n){
@@ -653,7 +797,79 @@ float MainWindow::requestDroneAltitude(int n){
     return fed.data;
 
 }
+void MainWindow::setPTZSpeed(int n,RotationDirection dir ,float angle)
+{
 
+
+    double upper , lower;
+
+    lower = modf(angle , &upper);
+    lower *= 100;
+    lower = (int) lower;
+
+    requestSetSpeed(n,dir,(char)lower,false);
+    requestSetSpeed(n,dir,(char)upper, true);
+    requestLoadSpeed(n,dir);
+
+
+
+
+}
+
+void MainWindow::setTargetAngle(int n,RotationDirection dir ,float angle)
+{
+
+
+    double upper , lower , delta;
+
+    lower = modf(angle , &upper);
+    lower *= 100;
+    lower = (int) lower;
+
+    requestSetTargetAngle(n,dir,(char)lower,false);
+
+    if(upper > 127){
+        requestSetTargetAngle(n,dir,(char)0,true);
+        delta = (int) upper;
+        // qDebug() << QString("delta sup %0 id %1").arg(delta).arg(n);
+        while(delta > 127){
+            requestAddTargetAngle(n,dir,(char)127,true);
+
+
+            delta -= 127;
+        }
+       // qDebug() << QString("delta last %0 id %1").arg(delta).arg(n);
+
+        requestAddTargetAngle(n,dir,(char)delta,true);
+    }
+
+    else requestSetTargetAngle(n,dir,(char)upper, true);
+
+
+    if(dir == Azimuth)
+        requestLoadTargetAngle(n,Azimuth);
+
+    else
+        requestLoadTargetAngle(n,Elevation);
+
+
+}
+float MainWindow::requestLoadSpeed(int n , RotationDirection dir){
+    Packet::pktCommand cmd;
+    Packet::pktFeedback fed;
+    cmd.cmd = Packet::Command::WRITE;
+    cmd.peripheral = n;
+    cmd.peripheral_function =  dir == RotationDirection::Azimuth ? Packet::PeripheralFunction::LOAD_SPEED_AZIMUTH : Packet::PeripheralFunction::LOAD_SPEED_ELEVATION;
+    cmd.action = 0;
+    fed = sendPacket(&cmd);
+    while(!checkPacketValidaty(&cmd,&fed)){
+        qDebug() << QString("Resend");
+        fed = sendPacket(&cmd);
+    }
+
+
+    return fed.data;
+}
 
 MainWindow::~MainWindow()
 {

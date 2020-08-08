@@ -1,6 +1,6 @@
-QT       += core gui widgets quick quickwidgets location
+QT       += core gui widgets quick quickwidgets location charts
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets quick quickwidgets location
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets quick quickwidgets location charts
 
 CONFIG += c++11
 QMAKE_CXXFLAGS += -fpermissive
@@ -16,14 +16,26 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    autodrone.cpp \
+    bezier.cpp \
+    controlpoint.cpp \
     drone.cpp \
+    #dronepath.cpp \
+    geobezier.cpp \
+   # geocontrolpoint.cpp \
     main.cpp \
     mainwindow.cpp \
     marker.cpp \
     ptzelement.cpp
 
 HEADERS += \
+    autodrone.h \
+    bezier.h \
+    controlpoint.h \
     drone.h \
+    #dronepath.h \
+    geobezier.h \
+    #geocontrolpoint.h \
     mainwindow.h \
     Packet.h \
     marker.h \

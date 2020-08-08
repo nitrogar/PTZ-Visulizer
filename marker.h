@@ -6,6 +6,7 @@
 #include <QGeoCoordinate>
 #include "ptzelement.h"
 #include "drone.h"
+#include "autodrone.h"
 class Marker : public QAbstractListModel
 {
     Q_OBJECT
@@ -18,7 +19,7 @@ class Marker : public QAbstractListModel
 public:
     explicit Marker(QObject *parent = nullptr);
     enum{MarkerPostion = Qt::UserRole , Vertex1,Vertex2,Vertex3,Radius,CenterLine,CircleColor ,Number,Up,ViewLine,Azimuth,Elevation,
-           Theta,R, Phi,Ro,CaclulatedLine,DronePostion,DroneVector,LeftLine,RightLine , HalfRightLine,HalfLeftLine
+           Theta,R, Phi,Ro,CaclulatedLine,DronePostion,DroneVector,LeftLine,RightLine , HalfRightLine,HalfLeftLine,CP1,CP2,CP3,CP4,CP5
         };
     // Basic functionality:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -38,9 +39,14 @@ public:
     void setDrone(Drone * d);
     void updateDrone();
     void removeMarkerAll();
+    void setAutoDrone(AutoDrone * p){ad = p;};
+public slots:
+    void updateCP(int n);
+
 private:
     QList<PTZElement *> PTZ;
     Drone * drone;
+    AutoDrone * ad;
 };
 
 #endif // MARKER_H

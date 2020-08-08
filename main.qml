@@ -26,25 +26,62 @@ Rectangle{
 
         //}
 
-        /*MapItemView{
+        MapItemView{
             model: mapMarker
             delegate: MapQuickItem{
                     coordinate:  model.position
                     sourceItem: Text {
                         z: 1000
-                        text: model.number + "\n" + model.azimuth + "\n" + "Phi :" + model.phi + "\n" + "Theta :" + model.theta + "\n" + "Ro :" + model.ro + "\n" + "R :" + model.r
-
-
+                        text: model.number + "\n" + model.viewLine;
                     }
             }
 
         }
 
-*/
+
+
         MapItemView{
             model: mapMarker
             delegate: PTZCircle{
                     coordinate: model.position
+            }
+
+        }
+
+        MapItemView{
+            model: mapMarker
+            delegate: PTZCircle{
+                    coordinate: model.cp1
+            }
+
+        }
+        MapItemView{
+            model: mapMarker
+            delegate: PTZCircle{
+                    coordinate: model.cp2
+            }
+
+        }
+        MapItemView{
+            model: mapMarker
+            delegate: PTZCircle{
+                    coordinate: model.cp3
+            }
+
+        }
+        MapItemView{
+            model: mapMarker
+            delegate: PTZCircle{
+                    coordinate: model.cp4
+            }
+
+        }
+
+        MapItemView{
+            model: mapMarker
+            delegate: Drone{
+                    coordinate: model.cp5
+                    z:-100
             }
 
         }
@@ -91,7 +128,7 @@ Rectangle{
 
         }
 
-        MapItemView{
+    /*    MapItemView{
             model:mapMarker
             delegate: Drone{
                coordinate: model.dronePosition
@@ -101,7 +138,7 @@ Rectangle{
             }
         }
 
-
+*/
     }
 
 
