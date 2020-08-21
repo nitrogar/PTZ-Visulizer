@@ -55,13 +55,22 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     QVBoxLayout * vb2 = new QVBoxLayout();
+    QHBoxLayout * hb2 = new QHBoxLayout();
+
+    hb2->addWidget(&chartView);
+    hb2->addWidget(&chartSpeedView);
+    vb2->addWidget(&view);
+    vb2->addLayout(hb2);
     ui->PTZChart->setLayout(vb2);
-    ui->PTZChart->layout()->addWidget(&view);
-    ui->PTZChart->layout()->addWidget(&chartView);
+
+
     connect(a_drone,SIGNAL(geoPosChanged(int)),&mapMarker,SLOT(updateCP(int)));
     connect(&tick, SIGNAL(timeout()), this, SLOT(autoMode()));
     connect(ui->PrevPTZ,SIGNAL(clicked(bool)),this ,SLOT(prevPTZ()));
     connect(ui->NextPTZ,SIGNAL(clicked(bool)),this ,SLOT(nextPTZ()));
+
+    connect(ui->updateTracking,SIGNAL(clicked(bool)),this ,SLOT(updatePTZTrackSpeed()));
+    connect(ui->updateDrone,SIGNAL(clicked(bool)),this ,SLOT(updateDroneSpeed()));
 
 // add PTZChart , do the button connect , do slot to switch ptz , move chartView and grahics view from the ptz to mainwin to just setScence , set Chart
     // PLUS minus movment dir not im
@@ -209,7 +218,7 @@ void MainWindow::autoMode()
 {
     if(this->connected == ConnectionStatus::On){
              retrevePTZsInformation();
-             a_drone->advanceDefult();
+             a_drone->advance(tick.interval());
     }
 
 }
@@ -223,7 +232,7 @@ void MainWindow::prevPTZ()
   if(currentPTZ < 0) currentPTZ = 0;
 
    setPTZScene(PTZs[currentPTZ]->scene);
-   setPTZChart(PTZs[currentPTZ]->rmsChart);
+   setPTZChart(PTZs[currentPTZ]->rmsChart,PTZs[currentPTZ]->rmsSpeedChart);
 
    ui->PTZNumber->setText(QString::number(currentPTZ));
 
@@ -240,7 +249,7 @@ void MainWindow::nextPTZ()
    if(currentPTZ < 0) currentPTZ = 0;
 
     setPTZScene(PTZs[currentPTZ]->scene);
-    setPTZChart(PTZs[currentPTZ]->rmsChart);
+    setPTZChart(PTZs[currentPTZ]->rmsChart,PTZs[currentPTZ]->rmsSpeedChart);
     ui->PTZNumber->setText(QString::number(currentPTZ));
 
 
@@ -271,6 +280,8 @@ void MainWindow::initPTZs(){
         mapMarker.addMarker(i,PTZs[i]);
         log("add PTZ .." , false);
     }
+
+
 }
 
 void MainWindow::initDrone()
@@ -293,6 +304,27 @@ void MainWindow::deletePTZs(){
 
     PTZs.clear();
     mapMarker.removeMarkerAll();
+
+}
+
+void MainWindow::updatePTZTrackSpeed()
+{
+    if(ui->TrackingMaxAzmSpeed->text().isEmpty() || ui->TrackingMaxEleSpeed->text().isEmpty() ) return;
+    for(auto p : PTZs){
+        p->azimuthAnglurSpeed = ui->TrackingMaxAzmSpeed->text().toFloat();
+        p->elevationAnglurSpeed = ui->TrackingMaxEleSpeed->text().toFloat();
+
+
+    }
+
+
+}
+
+void MainWindow::updateDroneSpeed()
+{
+    if(ui->DroneMaxSpeed->text().isEmpty()) return;
+
+    a_drone->setSpeed(ui->DroneMaxSpeed->text().toFloat());
 
 }
 void MainWindow::retrevePTZsInformation(){
@@ -617,11 +649,15 @@ void MainWindow::setPTZScene(QGraphicsScene &sc)
     view.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
-void MainWindow::setPTZChart(QChart &ch)
+void MainWindow::setPTZChart(QChart &ch,QChart &speedch)
 {
     chartView.setChart(&ch);
     chartView.setRenderHint(QPainter::Antialiasing);
     chartView.setRubberBand(QChartView::RectangleRubberBand);
+
+    chartSpeedView.setChart(&speedch);
+    chartSpeedView.setRenderHint(QPainter::Antialiasing);
+    chartSpeedView.setRubberBand(QChartView::RectangleRubberBand);
 }
 
 float MainWindow::requestPTZAltitude(int n){

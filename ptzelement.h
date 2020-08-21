@@ -89,7 +89,7 @@ public:
     double cubeRoot(double x);
     bool approx(float a ,float b);
     double * sloveCubic(float a,float b,float c,float d,float e);
-
+    float calculateDistance(QGeoCoordinate & a, QGeoCoordinate & b);
 
 
 
@@ -98,6 +98,8 @@ public:
     void addPredictPoint(QPointF & p);
     void addRealPoint(QPointF & p);
     void clearPrePath();
+
+
     int  id;
     double latitude;
     double longitude;
@@ -122,13 +124,20 @@ public:
     QGraphicsPathItem dronePath;
     QGraphicsPathItem predictedPath;
     QtCharts::QChart rmsChart;
+    QtCharts::QChart rmsSpeedChart;
+
     float total_time = 0;
     QGeoCoordinate droneEndpoint;
     QtCharts::QLineSeries errAzimuthSerise;
     QtCharts::QLineSeries errElevationSerise;
     QtCharts::QLineSeries errSpeedSerise;
+    QtCharts::QLineSeries errElevationSpeedSerise;
+
     QtCharts::QValueAxis AX;
     QtCharts::QValueAxis AY;
+    QtCharts::QValueAxis AX2;
+    QtCharts::QValueAxis AY2;
+
     bool isfirstPointInPredection = true;
 private:
 

@@ -219,28 +219,15 @@ PTZElement::Vector3d PTZElement::getVectorTo(double lat, double lng, double alt)
     else if(n == 0 && lng < this->longitude) th0 = M_PI + M_PI_2;
     else {
         th0 = acos(n/r);
-        //qDebug() << 3 << th0 << r/n;
     }
 
     double dlat = this->latitude - lat;
     double dlng = this->longitude - lng;
-/*
-    if(dlat < 0 && dlng < 0 ) th0 =(M_PI_2 - th0) +  M_PI;
-    else if(dlat > 0 && dlng < 0) th0 += M_PI_2;
-    else if(dlat < 0 && dlng > 0) th0 += M_PI/3;
-    else th0 -= M_PI_2;
 
-*/
-
-    //if(dlat < 0 && dlng < 0 ) th0 =(M_PI_2 - th0) +  M_PI;
     if(dlat > 0 && dlng < 0) th0 = M_PI - th0;
     else if(dlat < 0 && dlng > 0) th0 = 2*M_PI - th0;
     else if(dlat > 0 && dlng > 0 ) th0 += M_PI;
 
-    //double th1 = this->angleFromNorth * DEG_TO_RAD;
-    //th1 = th0 - th1;
-
-    //if(th1 < 0) th1 += M_PI;
 
     double dalt = alt - this->altitude;
     double phi;
@@ -251,7 +238,6 @@ PTZElement::Vector3d PTZElement::getVectorTo(double lat, double lng, double alt)
     phi = M_PI_2 - phi;
 
     double ro = r / sin(phi);
-    //qDebug() << QString("Theta:%0 R:%1 phi:%2 Ro:%3 delta:%4").arg(th0* 180/M_PI).arg(r).arg(phi* 180/M_PI).arg(ro).arg(dalt);
     if(ro > range || (ro < 0 && -1*ro > range)) return {0,0,0,0};
 
 
@@ -274,7 +260,7 @@ float PTZElement::haversine(double lat0, double lng0 ,double lat1, double lng1 )
 
 
 }
-
+// deprecated
 QGeoCoordinate PTZElement::positionAt(AutoDrone *d, float t)
 {
     QVector3D final = positionXYZAt(d,t);
@@ -288,10 +274,9 @@ QVector3D PTZElement::positionXYZAt(AutoDrone *d, float t)
     QGeoCoordinate dronePos = d->getPostition();
     QVector3D pos_xyz = GeoTocart(dronePos);
     QVector3D final = v+pos_xyz;
-    //qDebug()<< QString("Final Postion : ") << final << QString("in Goe :") << cartToGeo(final);
     return final;
 }
-
+// deprecated
 QGeoCoordinate PTZElement::cartToGeo(QVector3D &v)
 {
     float dist_x = v.x();
@@ -309,12 +294,12 @@ QGeoCoordinate PTZElement::cartToGeo(QVector3D &v)
 QVector3D PTZElement::GeoTocart(QGeoCoordinate &g)
 {
     QGeoCoordinate center = {latitude,longitude,altitude};
-   // qDebug() << QString("g : ") << g;
-   // qDebug() << QString("center : ") << center;
 
     float dist_x = center.distanceTo(QGeoCoordinate(center.latitude(),g.longitude()));
+
     float bearing = center.azimuthTo(g);
     float dist_y = center.distanceTo(QGeoCoordinate(g.latitude(), center.longitude()));
+    QGeoCoordinate x = QGeoCoordinate(center.latitude(),g.longitude());
 
     if(bearing > 90 && bearing < 270) dist_y *=-1;
     if(bearing > 180) dist_x *=-1;
@@ -325,6 +310,7 @@ QVector3D PTZElement::GeoTocart(QGeoCoordinate &g)
     return {dist_x,dist_y,dist_z};
 }
 
+// will be renamed as distacneTraveld
 QVector3D PTZElement::velocity(float t)
 {
 
@@ -339,7 +325,7 @@ PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist)
     QVector<QPointF> angles;
     QVector3D tmp ;
     QPointF ptm,p;
-    float Azmfactor = -1,Elefactor = -1;
+    float Azmfactor = 0,Elefactor = 0;
     float shAngle ;
     float cost, maxCost,minCost,costAzm,costEle,azmSpeed,EleSpeed,droneTimeToPoint,AzmTimeToPoint,EleTimeToPoint,XYSpeed;
     float time,maxTime,minTime,tmp2,tmp3;
@@ -349,7 +335,7 @@ PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist)
     isfirstPointInPredection = true;
 
     for(int i = 1; i < 20; i++){
-        time = i * 0.25;
+        time = i * 0.1;
         tmp =  positionXYZAt(d,time);
         p = QPointF(tmp.x(),-tmp.y());
 
@@ -363,25 +349,25 @@ PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist)
         if(shAngle < -180) shAngle += 360;
         if(shAngle > 180) shAngle -= 360;
 
-        //qDebug() << QString("Elevation :%0 Z:%1 X:%2 Y:%3 R:%4")
-        //            .arg(tmp2).arg(tmp.z()).arg(tmp.x()).arg(tmp.y()).arg(sqrt(tmp.x()*tmp.x()+tmp.y()*tmp.y()));
         ptm = QPointF(shAngle,tmp2 - elevation);
         angles << ptm;
     }
 
    minCost = 10000000;
-   float azimuthAnglurSpeed = 100;
-   float elevationAnglurSpeed = 100;
+   //float azimuthAnglurSpeed = 50;
+   //float elevationAnglurSpeed = 50;
    double pret1 ,t1,t2,t ,diffAngle;
    double *ts;
-   float b1 , b2,db,ZSpeed;
+   float b1,b2,db,ZSpeed;
+
    float O = calculateOrbitalVelocity(QPointF(0,0),historyXYZ[historyXYZ.size()-2].toPointF(),historyXYZ[historyXYZ.size()-1].toPointF());
+   // this line in the function above
    float OrbitalSpeed = sqrt(param[0]*param[0] + param[1]*param[1])*sin(O)/dist;
    XYSpeed = OrbitalSpeed * 180/M_PI; ////sqrt(param[0]*param[0] + param[1]*param[1])*sin(db)/dist;
-
    for(int i = 0 ; i < angles.size(); i++){
                 droneTimeToPoint = timeTo[i];
                 XYSpeed = isnanf(XYSpeed) ? abs(angles[i].x()/droneTimeToPoint) : XYSpeed;
+                XYSpeed = abs(XYSpeed) > azimuthAnglurSpeed  ? azimuthAnglurSpeed : XYSpeed;
                 ZSpeed = abs(angles[i].y()/droneTimeToPoint);
                 diffAngle = abs(angles[i].x()/180);
                 t = NAN;
@@ -389,12 +375,10 @@ PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist)
                 for(int i = 0 ; i < 3 ; i++){
 
                     if(abs(ts[i]) <= 1 && ts[i] != NAN) {t = ts[i];}
-                   // qDebug() << QString("Solution (%0) t = %1").arg(i).arg(ts[i]);
                 }
                 if(t == NAN) qDebug() << QString("No solution %0").arg(diffAngle);
-                //qDebug() << QString("t = %0 , for X = %1").arg(t).arg(diffAngle);
 
-                azmSpeed = (1-t)*(1-t)*(1-t)*XYSpeed + 3*(1-t)*(1-t)*t*XYSpeed +3*(1-t)*t*t*azimuthAnglurSpeed+ + t*t*t*azimuthAnglurSpeed;
+                azmSpeed = (1-t)*(1-t)*(1-t)*XYSpeed + 3*(1-t)*(1-t)*t*XYSpeed +3*(1-t)*t*t*azimuthAnglurSpeed + t*t*t*azimuthAnglurSpeed;
 
 
 
@@ -404,16 +388,10 @@ PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist)
 
                 AzmTimeToPoint = abs(angles[i].x() / azmSpeed);
                 EleTimeToPoint = abs(angles[i].y() / EleSpeed);
-              // qDebug() << QString("Sample(%0)   DroneTimeToPoint:%1 AzmTimeToPoint:%2 EleTimeToPoint:%3 azmSpeed:%4 eleSpeed:%5 XYSpeed:%8(%10)(%11)(%12) RelativeAzm:%6  RelativeEle:%7 Elevation:%9")
-              //           .arg(i).arg(droneTimeToPoint).arg(AzmTimeToPoint).arg(EleTimeToPoint).arg(azmSpeed).arg(EleSpeed).arg(angles[i].x())
-              //             .arg(angles[i].y()).arg(XYSpeed).arg(elevation).arg(OrbitalSpeed).arg(O).arg(dist);
 
                 if(droneTimeToPoint < AzmTimeToPoint || droneTimeToPoint < EleTimeToPoint ) continue;
 
-             /*   qDebug() << QString("(%10)(%12) XY:%9(%11) ASpeed: %0 %1 , ESpeed: %2 %3 , t1: %4 %5 , t2: %6 , angle(%7,%8) ")
-                            .arg(azimuthAnglurSpeed).arg(azmSpeed).arg(elevationAnglurSpeed).arg(EleSpeed).arg(pret1).arg(t1).arg(t2).arg(angles[i].x()).arg(angles[i].y()).arg(XYSpeed)
-                            .arg(i).arg(db).arg(dist);
-             */
+
 
                 Azmfactor = angles[i].x() < 0 ? -1*azmSpeed : azmSpeed;
                 Elefactor = angles[i].y() < 0 ? -1*EleSpeed : EleSpeed;
@@ -424,26 +402,12 @@ PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist)
 
                 oldAzimuth = angles[i].x();
                 break;
-                //costAzm = XYSpeed==0 ? 0 : 0.3*abs((XYSpeed-azmSpeed)/(XYSpeed));
-                //costAzm = abs((droneTimeToPoint)/(5));
-
-                //costEle = param[2] == 0 ? 0 : 0.3*abs((param[2]-azmSpeed)/(param[2]));
-                //costEle = abs((droneTimeToPoint)/(5));
-
-               // maxCost = costAzm > costEle ? costAzm : costEle;
-               // if(maxCost < minCost) {minCost = maxCost;  bestIndex = i;}
-               // qDebug() << QString("XYSpeed:%0 costAzm:%1 costEle:%2 maxCost:%3 bestIndex:%4 Azmfactor:%5 Elefactor:%10 param:%6 %7 %8 candidate[0]: %9")
-               //             .arg(XYSpeed).arg(costAzm).arg(costEle).arg(maxCost).arg(bestIndex).arg(Azmfactor).arg(param[0]).arg(param[1]).arg(param[2]).arg(candidate[0]).arg(Elefactor);
-
-
-
-
-
    }
 
-    errSpeedSerise.append(total_time,abs(XYSpeed - Azmfactor));
 
-    if(Azmfactor == -1 || Elefactor == -1) {qDebug() << QString("No possible "); return {0,0};}
+    qDebug() << QString("Error : %0 , XY : %1 , azm : %2 diff : %3 ").arg((XYSpeed - Azmfactor)/Azmfactor).arg(XYSpeed).arg(Azmfactor).arg((XYSpeed - Azmfactor));
+    errElevationSpeedSerise.append(total_time,abs(ZSpeed - Elefactor));
+    errSpeedSerise.append(total_time,abs((XYSpeed - Azmfactor)/Azmfactor ) * 100);
 
 
   //  qDebug() << QString("[*] Best one ,Go to AzmSpeed : %0  EleSpeed : %1 ").arg(azmSpeed).arg(EleSpeed);
@@ -482,9 +446,13 @@ float PTZElement::calculateOrbitalVelocity(QPointF o, QPointF a, QPointF b)
      diffXbc = b.x() - x,
      diffYbc = b.y() - y,
      distAB = sqrt(difXab*difXab + difYab*difYab),
-     distBC = sqrt(diffXbc*diffXbc + diffYbc*diffYbc);
-    qDebug() << QString("m = %0 n = %1 x = %2 y = %3 ").arg(m).arg(n).arg(x).arg(y);
-    return asin(distBC / distAB);
+     distBC = sqrt(diffXbc*diffXbc + diffYbc*diffYbc),
+     thetaOA = atan2(a.y(),a.x()),
+     thetaOB = atan2(b.y(),b.x()),
+     clockwise = thetaOB > thetaOA ? -1 : 1;
+
+   // qDebug() << QString("m = %0 n = %1 x = %2 y = %3 ").arg(m).arg(n).arg(x).arg(y);
+    return clockwise* asin(distBC / distAB);
 
 
 }
@@ -507,6 +475,8 @@ PTZElement::Factors  PTZElement::droneScan(AutoDrone *d, float timeElapsed)
         errAzimuthSerise.clear();
         errElevationSerise.clear();
         errSpeedSerise.clear();
+        errElevationSpeedSerise.clear();
+        painterPath.clear();
     }
     QGeoCoordinate dronePostion = d->getPostition();
     QVector3D xy = GeoTocart(dronePostion);
@@ -524,6 +494,7 @@ PTZElement::Factors  PTZElement::droneScan(AutoDrone *d, float timeElapsed)
 
     total_time += timeElapsed/1000.0f ;
     AX.setMax(total_time);
+    AX2.setMax(total_time);
     float dAzimuth = abs(v.thetaToTarget - azimuth);
     dAzimuth = dAzimuth > 180 ? 360 - dAzimuth : dAzimuth;
     errAzimuthSerise.append(total_time,dAzimuth);
@@ -539,6 +510,7 @@ PTZElement::Factors  PTZElement::droneScan(AutoDrone *d, float timeElapsed)
 
 }
 
+// remove dist
 void PTZElement::updateVelocityParameters(float elapsed,float dist)
 {
     if(historyXYZ.size() < 2) return ;
@@ -617,6 +589,15 @@ double *  PTZElement::sloveCubic(float a,float b,float c,float d,float e)
 
 }
 
+float PTZElement::calculateDistance(QGeoCoordinate &a, QGeoCoordinate &b)
+{
+    float dlat = (a.latitude() - b.latitude());
+    float y_dist = dlat* 111300;
+    float x_dist = (a.longitude() - b.longitude()) * 111300 * cos(dlat/2  * M_PI/180);
+
+    return sqrt(y_dist*y_dist + x_dist*x_dist);
+}
+
 void PTZElement::initScene()
 {
 
@@ -639,9 +620,11 @@ void PTZElement::initScene()
 
 void PTZElement::initChart()
 {
-      errAzimuthSerise.setName("Azimuth Error");
-      errElevationSerise.setName("Elevation Error");
-      errSpeedSerise.setName("Speed Error");
+      errAzimuthSerise.setName("Azimuth Error (degree)");
+      errElevationSerise.setName("Elevation Error (degree)");
+      errSpeedSerise.setName("Azimuth Speed Error (%)");
+      errElevationSpeedSerise.setName("Elevation Speed Error (%)");
+
       AX.setRange(0,100);
       AY.setRange(0,360);
 
@@ -651,18 +634,31 @@ void PTZElement::initChart()
       rmsChart.addAxis(&AY, Qt::AlignLeft);
       rmsChart.addSeries(&errAzimuthSerise);
       rmsChart.addSeries(&errElevationSerise);
-      rmsChart.addSeries(&errSpeedSerise);
-      rmsChart.setTitle("Tracking Error");
+
+
+      rmsChart.setTitle("Tracking Errors");
 
       errAzimuthSerise.attachAxis(&AX);
       errAzimuthSerise.attachAxis(&AY);
       errElevationSerise.attachAxis(&AX);
       errElevationSerise.attachAxis(&AY);
-      errSpeedSerise.attachAxis(&AX);
-      errSpeedSerise.attachAxis(&AY);
 
 
 
+      AX2.setRange(0,100);
+      AY2.setRange(0,360);
+      AY2.setTickCount(10);
+      AX2.setTickCount(10);
+      rmsSpeedChart.setTitle("Tracking Errors");
+      rmsSpeedChart.addAxis(&AX2, Qt::AlignBottom);
+      rmsSpeedChart.addAxis(&AY2, Qt::AlignLeft);
+      rmsSpeedChart.addSeries(&errElevationSpeedSerise);
+      rmsSpeedChart.addSeries(&errSpeedSerise);
+
+      errSpeedSerise.attachAxis(&AX2);
+      errSpeedSerise.attachAxis(&AY2);
+      errElevationSpeedSerise.attachAxis(&AX2);
+      errElevationSpeedSerise.attachAxis(&AY2);
 }
 
 void PTZElement::addPredictPoint(QPointF &p)
@@ -799,6 +795,7 @@ PTZElement::Vector3d PTZElement::vectorToDrone(AutoDrone *d)
    // return raw;
 }
 
+// will be renamed as calculateDroneVectorEndPoint
 QGeoCoordinate PTZElement::caclculatedEndPoint(AutoDrone * drone)
 {
     int id = this->id;
@@ -823,6 +820,7 @@ QGeoCoordinate PTZElement::getPostion()
     return QGeoCoordinate(this->latitude,this->longitude);
 }
 
+// deprecated
 QGeoCoordinate PTZElement::getEndLine()
 {
     return FindEndPoint(0,range);
@@ -843,7 +841,7 @@ QGeoCoordinate PTZElement::getEndLine()
     */
 
 }
-
+// deprecated
 QGeoCoordinate PTZElement::FindEndPoint(double angle,double r){
 
     return QGeoCoordinate(this->latitude,this->longitude).atDistanceAndAzimuth(r , angle);
@@ -863,7 +861,7 @@ QGeoCoordinate PTZElement::FindEndPoint(double angle,double r){
     return QGeoCoordinate(lat2,lng2);
 
 }
-
+// deprecated
 QGeoCoordinate PTZElement::FindEndPointWithRefrece(double angle,double r){
 
     double delta = r/EARTH_RADIUS_IN_METERS;

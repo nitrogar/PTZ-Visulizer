@@ -36,6 +36,7 @@ public:
     double getLongitude();
     double getAltitude();
     QGeoCoordinate getPostition();
+    void setSpeed(float s);
 signals:
     void geoPosChanged(int n);
     void pointChanged(int);

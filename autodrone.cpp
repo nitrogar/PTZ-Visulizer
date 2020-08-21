@@ -141,6 +141,7 @@ void AutoDrone::setPathGeoCenter(QGeoCoordinate c)
 
 void AutoDrone::advance(float t)
 {
+    t = t/1000.f;
     latLonCurve.advanceGeoPoint(t);
     altCurve.advancePoint(t);
     speedCurve.advancePoint(t);
@@ -187,6 +188,13 @@ QGeoCoordinate AutoDrone::getPostition()
     QGeoCoordinate g = latLonCurve.getGeoM();
     g.setAltitude(getAltitude());
     return g;
+}
+
+void AutoDrone::setSpeed(float s)
+{
+    latLonCurve.setSpeed(s);
+    altCurve.setSpeed(s);
+
 }
 
 void AutoDrone::geoCPChanged(int n)

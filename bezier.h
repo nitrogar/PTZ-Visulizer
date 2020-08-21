@@ -20,7 +20,8 @@ public:
     void advancePoint(float t);
     void setTime(float t);
     double getLength();
-
+    float getL();
+    void setSpeed(float s);
 public slots:
     void updatePath(int id);
 signals:
@@ -35,7 +36,11 @@ protected:
     QPen pen1;
     QPen pen2;
     float t_total;
+    float d_total;
+    float length;
+    float speed;
 
 };
+
 
 #endif // BEZIER_H

@@ -1,8 +1,12 @@
 #include "bezier.h"
-
+#include <cmath>
+#include <QDebug>
 Bezier::Bezier(QObject *parent) : QObject(parent)
 {
     t_total = 0;
+    d_total = 0;
+    length = 0;
+    speed = 0;
     pen1.setCapStyle(Qt::PenCapStyle::RoundCap);
     pen1.setStyle(Qt::PenStyle::DashDotDotLine);
     pen1.setWidth(5);
@@ -19,11 +23,11 @@ QPointF Bezier::at(float t)
 
 }
 
-QPointF Bezier::advance(float t)
+QPointF Bezier::advance(float d)
 {
-    t_total += t;
-    if(t_total > 1) t_total = 1;
-    return at(t_total);
+    d_total += d;
+    if(d_total > 1) d_total = 1;
+    return at(d_total);
 
 }
 
@@ -55,30 +59,43 @@ QGraphicsPathItem &Bezier::getPointPath()
 
 void Bezier::advancePoint(float t)
 {
-    if(t_total >= 1) return;
-    o.setPos(advance(t));
-    emit posChanged(4 );
+    if(d_total >= 1) return;
+    float d = t * speed/length;
+
+    o.setPos(advance(d));
+    emit posChanged(4);
 
 }
 
 void Bezier::setTime(float t)
 {
-    t_total = t;
+    d_total = t;
+
 
 }
 
 double Bezier::getLength()
 {
+    double r = 0;
+    for(int i = 0 ; i < 3 ; i++)
+        r += sqrt((cps[i]->get_mx() - cps[i+1]->get_mx())*(cps[i]->get_mx() - cps[i+1]->get_mx())+(cps[i]->get_my() - cps[i+1]->get_my())*(cps[i]->get_my() - cps[i+1]->get_my()));
 
-
+    return r;
 
 }
 
+float Bezier::getL(){
 
+    return length;
+}
+
+void Bezier::setSpeed(float s)
+{
+    speed = s;
+}
 
 void Bezier::updatePath(int id)
 {
-  //  qDebug() << QString("Changed") ;
     if(cps.count() < 4) return;
 
 
@@ -93,7 +110,7 @@ void Bezier::updatePath(int id)
 
    connection.setPath(s);
    connection.setPen(pen2);
-
+   length = getLength();
    emit posChanged(id);
 
 

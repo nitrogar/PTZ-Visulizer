@@ -84,7 +84,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>5</number>
           </property>
           <widget class="QWidget" name="PTZsTap">
            <attribute name="title">
@@ -173,7 +173,7 @@
           </widget>
           <widget class="QWidget" name="GraphicsViewTab">
            <attribute name="title">
-            <string>Page</string>
+            <string>Drone Path Planning</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_21">
             <item>
@@ -244,7 +244,7 @@
           </widget>
           <widget class="QWidget" name="tab">
            <attribute name="title">
-            <string>Page</string>
+            <string>Tracking Statistics</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_20">
             <item>
@@ -691,7 +691,7 @@
           </widget>
           <widget class="QWidget" name="mapTap">
            <attribute name="title">
-            <string>Map Settings</string>
+            <string>Settings</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_9">
             <item>
@@ -703,89 +703,92 @@
                <property name="geometry">
                 <rect>
                  <x>0</x>
-                 <y>0</y>
-                 <width>519</width>
-                 <height>308</height>
+                 <y>-53</y>
+                 <width>581</width>
+                 <height>353</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_13">
                 <item>
-                 <widget class="QGroupBox" name="groupBox_4">
+                 <widget class="QGroupBox" name="groupBox_6">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
                   <property name="title">
-                   <string>Add Marker</string>
+                   <string>Tracking Settings</string>
                   </property>
-                  <widget class="QWidget" name="layoutWidget">
-                   <property name="geometry">
-                    <rect>
-                     <x>13</x>
-                     <y>30</y>
-                     <width>398</width>
-                     <height>62</height>
-                    </rect>
-                   </property>
-                   <layout class="QVBoxLayout" name="verticalLayout_12">
-                    <item>
-                     <layout class="QHBoxLayout" name="horizontalLayout">
-                      <item>
-                       <widget class="QLabel" name="label_3">
-                        <property name="frameShadow">
-                         <enum>QFrame::Plain</enum>
-                        </property>
-                        <property name="text">
-                         <string>Latitude :</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLineEdit" name="markerLat">
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLabel" name="label_4">
-                        <property name="text">
-                         <string>Longitude :</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLineEdit" name="markerLong">
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                       </widget>
-                      </item>
-                     </layout>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="addMarker">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="text">
-                       <string>Insert</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
+                  <layout class="QVBoxLayout" name="verticalLayout_12">
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout">
+                     <item>
+                      <widget class="QLabel" name="label_3">
+                       <property name="text">
+                        <string>Max Azimuth Speed : </string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="TrackingMaxAzmSpeed"/>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_4">
+                       <property name="text">
+                        <string>Max Elevation Speed : </string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="TrackingMaxEleSpeed"/>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="updateTracking">
+                     <property name="text">
+                      <string>save</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QGroupBox" name="groupBox_4">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="title">
+                   <string>Drone Settings</string>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_22">
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_21">
+                     <item>
+                      <widget class="QLabel" name="label_20">
+                       <property name="text">
+                        <string>Drone Speed :</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="DroneMaxSpeed"/>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="updateDrone">
+                     <property name="text">
+                      <string>save</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </widget>
                 </item>
                 <item>
@@ -851,6 +854,19 @@
                    </item>
                   </layout>
                  </widget>
+                </item>
+                <item>
+                 <spacer name="verticalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
                 </item>
                </layout>
               </widget>

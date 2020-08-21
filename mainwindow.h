@@ -39,6 +39,10 @@ public slots :
     void autoMode();
     void prevPTZ();
     void nextPTZ();
+    // for testing
+    void updatePTZTrackSpeed();
+    void updateDroneSpeed();
+    // end for testing
 
 signals :
       void connctionStatusChanged(int status);
@@ -62,6 +66,7 @@ private:
     QTimer tick;
     QGraphicsView view;
     QtCharts::QChartView chartView;
+    QtCharts::QChartView chartSpeedView;
 
 private:
       int disconnectFromServer();
@@ -71,6 +76,7 @@ private:
       void initPTZs();
       void initDrone();
       void deletePTZs();
+
       Packet::pktFeedback sendPacket(Packet::pktCommand * cmd);
       void addPTZ();
       void setTargetAngle(int n,RotationDirection dir ,float angle);
@@ -99,7 +105,7 @@ private:
       void setPTZSpeed(int n,RotationDirection dir ,float angle);
 
       void setPTZScene(QGraphicsScene &sc);
-      void setPTZChart(QtCharts::QChart & ch);
+      void setPTZChart(QtCharts::QChart & ch ,QChart &speedch);
 
 
 };

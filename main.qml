@@ -47,6 +47,7 @@ Rectangle{
             }
 
         }
+        /*
 
         MapItemView{
             model: mapMarker
@@ -76,6 +77,7 @@ Rectangle{
             }
 
         }
+        */
 
         MapItemView{
             model: mapMarker
