@@ -71,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->updateTracking,SIGNAL(clicked(bool)),this ,SLOT(updatePTZTrackSpeed()));
     connect(ui->updateDrone,SIGNAL(clicked(bool)),this ,SLOT(updateDroneSpeed()));
-
+    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_R), this, SLOT(resetCurve()));
 // add PTZChart , do the button connect , do slot to switch ptz , move chartView and grahics view from the ptz to mainwin to just setScence , set Chart
     // PLUS minus movment dir not im
 
@@ -273,8 +273,11 @@ void MainWindow::initPTZs(){
         PTZs[i]->setAzimuthAngle(requestPTZRotationAngle(n,RotationDirection::Azimuth));
         PTZs[i]->setElevationAngle(requestPTZRotationAngle(n,RotationDirection::Elevation));
         PTZs[i]->setFOV(requestPTZFOV(i+1));
-        PTZs[i]->azimuthAnglurSpeed = requestPTZMaxSpeed(i+1,Azimuth);
-        PTZs[i]->elevationAnglurSpeed = requestPTZMaxSpeed(i+1,Elevation);
+        PTZs[i]->maxAzimuthAnglurSpeed = requestPTZMaxSpeed(i+1,Azimuth);
+        PTZs[i]->maxElevationAnglurSpeed = requestPTZMaxSpeed(i+1,Elevation);
+
+        PTZs[i]->azimuthAnglurSpeed = requestPTZSpeed(i+1,Azimuth);
+        PTZs[i]->elevationAnglurSpeed = requestPTZSpeed(i+1,Elevation);
         setTargetAngle(i+1,Elevation,25);
         setTargetAngle(i+1,Azimuth,100);
         mapMarker.addMarker(i,PTZs[i]);
@@ -337,6 +340,9 @@ void MainWindow::retrevePTZsInformation(){
 
         PTZs[i]->setAzimuthAngle(requestPTZRotationAngle(n,RotationDirection::Azimuth));
         PTZs[i]->setElevationAngle(requestPTZRotationAngle(n,RotationDirection::Elevation));
+        PTZs[i]->azimuthAnglurSpeed = requestPTZSpeed(n,RotationDirection::Azimuth);
+        PTZs[i]->elevationAnglurSpeed = requestPTZSpeed(n,RotationDirection::Elevation);
+
         f = PTZs[i]->droneScan(a_drone,tick.interval());
 
         setPTZSpeed(n,Azimuth,f.Azm);
@@ -746,6 +752,23 @@ float MainWindow::requestPTZRotationAngle(int n, RotationDirection dir){
 
 }
 float MainWindow::requestPTZMaxSpeed(int n, RotationDirection dir){
+    Packet::pktCommand cmd;
+    Packet::pktFeedback fed;
+    cmd.cmd = Packet::Command::READ;
+    cmd.peripheral = n;
+    cmd.peripheral_function =  Packet::PeripheralFunction::INFORMATION;
+    cmd.action = dir == RotationDirection::Azimuth ? Packet::Action::AZIMUTH_MAX_SPEED : Packet::Action::ELEVATION_MAX_SPEED;
+
+    fed = sendPacket(&cmd);
+    while(!checkPacketValidaty(&cmd,&fed)){
+        qDebug() << QString("Resend");
+        fed = sendPacket(&cmd);
+    }
+
+
+    return fed.data;
+}
+float MainWindow::requestPTZSpeed(int n, RotationDirection dir){
     Packet::pktCommand cmd;
     Packet::pktFeedback fed;
     cmd.cmd = Packet::Command::READ;

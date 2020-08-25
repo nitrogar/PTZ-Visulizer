@@ -306,7 +306,7 @@ QVector3D PTZElement::GeoTocart(QGeoCoordinate &g)
 
 
     float dist_z = g.altitude() - center.altitude();
-
+    //qDebug() << QString("g : %0 center: %1").arg(g.altitude()).arg(center.altitude());
     return {dist_x,dist_y,dist_z};
 }
 
@@ -317,7 +317,7 @@ QVector3D PTZElement::velocity(float t)
     return {param[0] * t ,param[1] * t,param[2] * t};
 
 }
-PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist)
+PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist,float zdist)
 {
     QVector<QVector3D> pred,timeNeeded;
     QVector<int> candidate;
@@ -325,11 +325,11 @@ PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist)
     QVector<QPointF> angles;
     QVector3D tmp ;
     QPointF ptm,p;
-    float Azmfactor = 0,Elefactor = 0;
+    float Azmfactor = -1,Elefactor = -1;
     float shAngle ;
     float cost, maxCost,minCost,costAzm,costEle,azmSpeed,EleSpeed,droneTimeToPoint,AzmTimeToPoint,EleTimeToPoint,XYSpeed;
     float time,maxTime,minTime,tmp2,tmp3;
-
+    bool azmready = false,eleready = false;
 
 
     isfirstPointInPredection = true;
@@ -359,58 +359,117 @@ PTZElement::Factors PTZElement::caclulateFastes(AutoDrone *d,float dist)
    double pret1 ,t1,t2,t ,diffAngle;
    double *ts;
    float b1,b2,db,ZSpeed;
+   QPointF a = {historyXYZ[historyXYZ.size()-2].x(),historyXYZ[historyXYZ.size()-2].z()},b={historyXYZ[historyXYZ.size()-1].x(),historyXYZ[historyXYZ.size()-1].z()};
+   float O = calculateOrbitalVelocity(1,historyXYZ[historyXYZ.size()-2].toPointF(),historyXYZ[historyXYZ.size()-1].toPointF());
+   float O2 = calculateOrbitalVelocity(0,a,b);
+   if(isnanf(O2)){
 
-   float O = calculateOrbitalVelocity(QPointF(0,0),historyXYZ[historyXYZ.size()-2].toPointF(),historyXYZ[historyXYZ.size()-1].toPointF());
+       qDebug() << "No use " ;
+
+   }
    // this line in the function above
    float OrbitalSpeed = sqrt(param[0]*param[0] + param[1]*param[1])*sin(O)/dist;
    XYSpeed = OrbitalSpeed * 180/M_PI; ////sqrt(param[0]*param[0] + param[1]*param[1])*sin(db)/dist;
+   float Z = sqrt(param[0]*param[0] + param[2]*param[2])*sin(O2)/zdist;
+   ZSpeed = Z * 180/M_PI;
+   float maxAzm , maxEle;
    for(int i = 0 ; i < angles.size(); i++){
+
                 droneTimeToPoint = timeTo[i];
+
+
+                maxAzm = angles[i].x() < 0 ? -1*maxAzimuthAnglurSpeed : maxAzimuthAnglurSpeed;
+                maxEle = angles[i].y() < 0 ? -1*maxElevationAnglurSpeed : maxElevationAnglurSpeed;
+
+
                 XYSpeed = isnanf(XYSpeed) ? abs(angles[i].x()/droneTimeToPoint) : XYSpeed;
-                XYSpeed = abs(XYSpeed) > azimuthAnglurSpeed  ? azimuthAnglurSpeed : XYSpeed;
-                ZSpeed = abs(angles[i].y()/droneTimeToPoint);
+                XYSpeed = abs(XYSpeed) > abs(maxAzm)  ? maxAzm : XYSpeed;
+
+                ZSpeed = isnanf(ZSpeed) ? abs(angles[i].y()/droneTimeToPoint) : ZSpeed;
+                ZSpeed = abs(ZSpeed) > abs(maxEle)  ? maxEle : ZSpeed;
+
+               // if(isnanf(O2)){
+
+                 //   qDebug() << "No use " ;
+                 //ZSpeed = abs(angles[i].y()/droneTimeToPoint);
+                   // qDebug() << QString("%0 %1 %2").arg(angles[i].y()).arg(droneTimeToPoint).arg(elevation);
+
+                //}
+               //                // qDebug() << QString("%0 %1 %2").arg(angles[i].y()).arg(droneTimeToPoint).arg(elevation);
+              //  qDebug() << angles;
                 diffAngle = abs(angles[i].x()/180);
                 t = NAN;
-                ts = sloveCubic(1.6,-1.2,0.6,0,diffAngle);
+                ts = sloveCubic(1.3,-0.6,0.3,0,diffAngle);
                 for(int i = 0 ; i < 3 ; i++){
 
                     if(abs(ts[i]) <= 1 && ts[i] != NAN) {t = ts[i];}
                 }
                 if(t == NAN) qDebug() << QString("No solution %0").arg(diffAngle);
 
-                azmSpeed = (1-t)*(1-t)*(1-t)*XYSpeed + 3*(1-t)*(1-t)*t*XYSpeed +3*(1-t)*t*t*azimuthAnglurSpeed + t*t*t*azimuthAnglurSpeed;
+                azmSpeed = (1-t)*(1-t)*(1-t)*XYSpeed + 3*(1-t)*(1-t)*t*XYSpeed +3*(1-t)*t*t*maxAzm + t*t*t*maxAzm;
 
 
 
-                t2 = abs(angles[i].y()/180);
-                t = t2;
-                EleSpeed = (1-t)*(1-t)*(1-t)*ZSpeed + 3*(1-t)*(1-t)*t*ZSpeed +3*(1-t)*t*t*elevationAnglurSpeed + t*t*t*elevationAnglurSpeed;
+                diffAngle = abs(angles[i].y()/180);
+                t = NAN;
+                ts = sloveCubic(1.3,-0.6,0.3,0,diffAngle);
+                for(int i = 0 ; i < 3 ; i++){
+
+                    if(abs(ts[i]) <= 1 && ts[i] != NAN) {t = ts[i];}
+                }
+                if(t == NAN) qDebug() << QString("No solution El %0").arg(diffAngle);
+
+                //t2 = abs(angles[i].y()/180);
+                //t = t2;
+                EleSpeed = (1-t)*(1-t)*(1-t)*ZSpeed + 3*(1-t)*(1-t)*t*ZSpeed +3*(1-t)*t*t*maxEle + t*t*t*maxEle;
+
 
                 AzmTimeToPoint = abs(angles[i].x() / azmSpeed);
                 EleTimeToPoint = abs(angles[i].y() / EleSpeed);
 
-                if(droneTimeToPoint < AzmTimeToPoint || droneTimeToPoint < EleTimeToPoint ) continue;
+                qDebug() << QString("[%0] droneTime: %1 azmTime: %2 eleTime: %3 diffAng Azm: %4 Ele: %5 Speeds XY: %6 AzmSpeed: %7 ZSpeed: %8 EleSpeed: %9 ")
+                            .arg(i).arg(timeTo[i]).arg(AzmTimeToPoint).arg(EleTimeToPoint).arg(angles[i].x()).arg(angles[i].y()).arg(XYSpeed).arg(azmSpeed).arg(ZSpeed).arg(EleSpeed);
+
+                if(droneTimeToPoint < AzmTimeToPoint && droneTimeToPoint < EleTimeToPoint ) continue;
 
 
+               // Azmfactor = angles[i].x() < 0 ? -1*azmSpeed : azmSpeed;
+               // Elefactor = angles[i].y() < 0 ? -1*EleSpeed : EleSpeed;
+               /// Delete ME //
+               Azmfactor = azmSpeed;
+               Elefactor = EleSpeed;
 
-                Azmfactor = angles[i].x() < 0 ? -1*azmSpeed : azmSpeed;
-                Elefactor = angles[i].y() < 0 ? -1*EleSpeed : EleSpeed;
+                if(abs(angles[i].x()) < 1 && ((oldAzimuth < 0 && angles[i].x() > 0) || (oldAzimuth > 0 && angles[i].x() < 0))){ qDebug() << QString("AZViprate"); Azmfactor = 0;}
+                if(abs(angles[i].y()) < 1 && ((oldElevation < 0 && angles[i].y() > 0) || (oldElevation > 0 && angles[i].y() < 0))){ qDebug() << QString("ELViprate"); Elefactor = 0;}
 
-
-                if(abs(angles[i].x()) < 1 && ((oldAzimuth < 0 && angles[i].x() > 0) || (oldAzimuth > 0 && angles[i].x() < 0))){ qDebug() << QString("Viprate"); Azmfactor = 0;}
-                if(abs(angles[i].y()) < 0.01 ) Elefactor = 0;
 
                 oldAzimuth = angles[i].x();
+                oldElevation = angles[i].y();
                 break;
    }
 
 
-    qDebug() << QString("Error : %0 , XY : %1 , azm : %2 diff : %3 ").arg((XYSpeed - Azmfactor)/Azmfactor).arg(XYSpeed).arg(Azmfactor).arg((XYSpeed - Azmfactor));
-    errElevationSpeedSerise.append(total_time,abs(ZSpeed - Elefactor));
-    errSpeedSerise.append(total_time,abs((XYSpeed - Azmfactor)/Azmfactor ) * 100);
+
+   if(elevationAnglurSpeed != 0) {
+
+        errElevationSpeedSerise.append(total_time,abs((ZSpeed - elevationAnglurSpeed)/elevationAnglurSpeed)*100 );
+        qDebug() << QString("$Error : %0 , Z  : %1 , current ele : %2 diff : %3  future ele : %4 t : %5")
+                    .arg((ZSpeed - elevationAnglurSpeed)/elevationAnglurSpeed  *100).arg(ZSpeed).arg(elevationAnglurSpeed).arg((ZSpeed - elevationAnglurSpeed)).arg(Elefactor).arg(total_time);;
+
+        if(abs((ZSpeed - elevationAnglurSpeed)/elevationAnglurSpeed )> 2) QString("!!!!!!!ELE!!!!!!!!");
+    }
+    if(azimuthAnglurSpeed != 0)  {
+
+        errSpeedSerise.append(total_time,abs((XYSpeed - azimuthAnglurSpeed)/azimuthAnglurSpeed ) * 100);
+        qDebug() << QString("$Error : %0 , XY : %1 , current azm : %2 diff : %3  future azm : %4 t : %5")
+                    .arg((XYSpeed - azimuthAnglurSpeed)/azimuthAnglurSpeed *100).arg(XYSpeed).arg(azimuthAnglurSpeed).arg((XYSpeed - azimuthAnglurSpeed)).arg(Azmfactor).arg(total_time);
+
+        if(abs((XYSpeed - azimuthAnglurSpeed)/azimuthAnglurSpeed) > 2) QString("!!!!!!!AZM!!!!!!!!");
+    }
+
+  qDebug() << QString("[#] azm: %0 ele:%1").arg(Azmfactor).arg(Elefactor) ;
 
 
-  //  qDebug() << QString("[*] Best one ,Go to AzmSpeed : %0  EleSpeed : %1 ").arg(azmSpeed).arg(EleSpeed);
     return {Azmfactor,Elefactor};
 
 }
@@ -421,7 +480,7 @@ float  PTZElement::calculateBearing(float x , float y){
     return b < 0 ? b+360:b;
 }
 
-float PTZElement::calculateOrbitalVelocity(QPointF o, QPointF a, QPointF b)
+float PTZElement::calculateOrbitalVelocity(int isBearing, QPointF a, QPointF b)
 {
 
     // equation of the line from a to o, y = mx + b ==> y = mx
@@ -447,12 +506,20 @@ float PTZElement::calculateOrbitalVelocity(QPointF o, QPointF a, QPointF b)
      diffYbc = b.y() - y,
      distAB = sqrt(difXab*difXab + difYab*difYab),
      distBC = sqrt(diffXbc*diffXbc + diffYbc*diffYbc),
-     thetaOA = atan2(a.y(),a.x()),
-     thetaOB = atan2(b.y(),b.x()),
-     clockwise = thetaOB > thetaOA ? -1 : 1;
+     thetaOA,thetaOB;
+    if(isBearing){
+        thetaOA= atan2(a.y(),a.x());
+        thetaOB = atan2(b.y(),b.x());
+    }
+    else{
+        thetaOA = atan2(a.x(),a.y());
+        thetaOB = atan2(b.x(),b.y());
 
-   // qDebug() << QString("m = %0 n = %1 x = %2 y = %3 ").arg(m).arg(n).arg(x).arg(y);
-    return clockwise* asin(distBC / distAB);
+    }
+     int clockwise = thetaOB > thetaOA ? -1 : 1;
+
+   qDebug() << QString("a:(%4,%5) b:(%6,%7) m = %0 n = %1 x = %2 y = %3").arg(m).arg(n).arg(x).arg(y).arg(a.x()).arg(a.y()).arg(b.x()).arg(b.y());
+    return clockwise * asin(distBC / distAB);
 
 
 }
@@ -477,6 +544,7 @@ PTZElement::Factors  PTZElement::droneScan(AutoDrone *d, float timeElapsed)
         errSpeedSerise.clear();
         errElevationSpeedSerise.clear();
         painterPath.clear();
+
     }
     QGeoCoordinate dronePostion = d->getPostition();
     QVector3D xy = GeoTocart(dronePostion);
@@ -490,7 +558,7 @@ PTZElement::Factors  PTZElement::droneScan(AutoDrone *d, float timeElapsed)
     //float errorAzimuth = azimuth - calculateBearing(xy.x(),xy.y());
     //float errorElevation = elevation - atan2(xy.z(),sqrt(xy.x()*xy.x()+xy.y()*xy.y()))* 180/M_PI;
 
-    Factors f = caclulateFastes(d,v.r);
+    Factors f = caclulateFastes(d,v.r,v.roToTarget);
 
     total_time += timeElapsed/1000.0f ;
     AX.setMax(total_time);
@@ -500,6 +568,7 @@ PTZElement::Factors  PTZElement::droneScan(AutoDrone *d, float timeElapsed)
     errAzimuthSerise.append(total_time,dAzimuth);
     errElevationSerise.append(total_time,abs(v.phiToTarget - (90 - elevation)));
 
+    qDebug() << QString("AzmDiff : %0 EleDiff : %1").arg(dAzimuth).arg(abs(v.phiToTarget - (90 - elevation)));
 
   // qDebug() << QString("Total_time %0 %1 %2").arg(total_time).arg(v.phiToTarget).arg(elevation);
   // qDebug() << errElevationSerise.points();
@@ -612,7 +681,7 @@ void PTZElement::initScene()
     pen2.setWidth(2);
     pen2.setColor(QColor("red"));
     dronePath.setPen(pen2);
-    scene.addItem(&dronePath);
+    //scene.addItem(&dronePath);
     scene.addItem(&predictedPath);
 }
 
@@ -652,8 +721,8 @@ void PTZElement::initChart()
       rmsSpeedChart.setTitle("Tracking Errors");
       rmsSpeedChart.addAxis(&AX2, Qt::AlignBottom);
       rmsSpeedChart.addAxis(&AY2, Qt::AlignLeft);
-      rmsSpeedChart.addSeries(&errElevationSpeedSerise);
       rmsSpeedChart.addSeries(&errSpeedSerise);
+      rmsSpeedChart.addSeries(&errElevationSpeedSerise);
 
       errSpeedSerise.attachAxis(&AX2);
       errSpeedSerise.attachAxis(&AY2);
@@ -669,6 +738,7 @@ void PTZElement::addPredictPoint(QPointF &p)
     }
     else
         painterPath.lineTo(p);
+
     predictedPath.setPath(painterPath);
 
 }

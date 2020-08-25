@@ -25,7 +25,7 @@ Rectangle{
         //    radius: 100
 
         //}
-
+/*
         MapItemView{
             model: mapMarker
             delegate: MapQuickItem{
@@ -39,7 +39,7 @@ Rectangle{
         }
 
 
-
+*/
         MapItemView{
             model: mapMarker
             delegate: PTZCircle{

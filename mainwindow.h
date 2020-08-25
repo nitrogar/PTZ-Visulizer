@@ -91,6 +91,7 @@ private:
       float requestDroneLongitude(int n);
       float requestDroneAltitude(int n);
       float requestPTZRotationAngle(int n, RotationDirection dir);
+      float requestPTZSpeed(int n, RotationDirection dir);
       float requestPTZMaxSpeed(int n, RotationDirection dir);
       float requestPTZSpeedFactor(int n , RotationDirection dir);
       float requestPTZFOV(int n);

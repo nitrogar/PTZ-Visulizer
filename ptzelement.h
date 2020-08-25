@@ -80,12 +80,12 @@ public:
     QGeoCoordinate cartToGeo(QVector3D & v);
     QVector3D  GeoTocart(QGeoCoordinate & g);
     QVector3D  velocity(float t);
-    Factors  caclulateFastes(AutoDrone *d,float dist);
+    Factors  caclulateFastes(AutoDrone *d,float dist,float zdist);
     Factors  droneScan(AutoDrone * d,float timeElapsed);
     void updateVelocityParameters(float elapsed,float dist);
     float motionFunction(float dd);
     float  calculateBearing(float x , float y);
-    float calculateOrbitalVelocity(QPointF o ,QPointF a,QPointF b);
+    float calculateOrbitalVelocity(int isBearing ,QPointF a,QPointF b);
     double cubeRoot(double x);
     bool approx(float a ,float b);
     double * sloveCubic(float a,float b,float c,float d,float e);
@@ -112,7 +112,10 @@ public:
     double elevation;
     double azimuthAnglurSpeed;
     double elevationAnglurSpeed;
+    double maxAzimuthAnglurSpeed;
+    double maxElevationAnglurSpeed;
     float oldAzimuth = 0;
+    float oldElevation = 0;
     QString circleColor;
     Vector3d toTarget;
     QVector<QVector3D> historyXYZ;
