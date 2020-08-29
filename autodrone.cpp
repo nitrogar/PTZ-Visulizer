@@ -111,10 +111,13 @@ void AutoDrone::initScenes()
     scene_z->addItem(&altCurve.getPath());
     scene_z->addItem(&altCurve.getM());
     scene_z->addItem(&altCurve.getPointPath());
+    scene_z->addRect(0,0,10,10,QPen("red"));
+
     for(int i = 0 ; i < 10;i++){
         float level = (float)(altTometer * i );
 
-        scene_z->addLine(50,-1*level,-1*50,-1*level);
+        scene_z->addLine(100,-level,-100,-level);
+        scene_z->addText(QString::number(level),f)->setPos(60,-level);
 
     }
     for(auto v :altCurve.getControlPoints())
@@ -179,7 +182,8 @@ double AutoDrone::getLongitude()
 
 double AutoDrone::getAltitude()
 {
-    return -1*altCurve.getM().pos().y()/altTometer;
+    //qDebug() << "getAlt " <<  -altCurve.getM().pos().y() << "divide " << altTometer;
+    return -1*altCurve.getM().pos().y();///altTometer;
 
 }
 

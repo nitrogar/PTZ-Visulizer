@@ -72,6 +72,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->updateTracking,SIGNAL(clicked(bool)),this ,SLOT(updatePTZTrackSpeed()));
     connect(ui->updateDrone,SIGNAL(clicked(bool)),this ,SLOT(updateDroneSpeed()));
     new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_R), this, SLOT(resetCurve()));
+
+    connect(ui->CoListen,SIGNAL(clicked(bool)),this ,SLOT(listenController()));
+    connect(ui->updatePTZCo,SIGNAL(clicked(bool)),this ,SLOT(updatePTZCo()));
+
 // add PTZChart , do the button connect , do slot to switch ptz , move chartView and grahics view from the ptz to mainwin to just setScence , set Chart
     // PLUS minus movment dir not im
 
@@ -343,6 +347,11 @@ void MainWindow::retrevePTZsInformation(){
         PTZs[i]->azimuthAnglurSpeed = requestPTZSpeed(n,RotationDirection::Azimuth);
         PTZs[i]->elevationAnglurSpeed = requestPTZSpeed(n,RotationDirection::Elevation);
 
+        mapMarker.update(i,mapMarker.ViewLine);
+        mapMarker.update(i,mapMarker.LeftLine);
+        mapMarker.update(i,mapMarker.RightLine);
+        mapMarker.update(i,mapMarker.DroneVector);
+        if(i == PTZCo) continue;
         f = PTZs[i]->droneScan(a_drone,tick.interval());
 
         setPTZSpeed(n,Azimuth,f.Azm);
@@ -374,10 +383,7 @@ void MainWindow::retrevePTZsInformation(){
 
 
 
-        mapMarker.update(i,mapMarker.ViewLine);
-        mapMarker.update(i,mapMarker.LeftLine);
-        mapMarker.update(i,mapMarker.RightLine);
-        mapMarker.update(i,mapMarker.DroneVector);
+
     }
     /*
     double lat = requestDroneLatitude(0);
@@ -403,6 +409,22 @@ void MainWindow::retrevePTZsInformation(){
     qDebug() << QString("45 Lat : %1 , Long : %2 , final lat : %3 final lng : %4").arg(PTZs[3]->getLat()).arg(PTZs[3]->getLong()).arg(final.latitude()).arg(final.longitude());
     mapMarker.updateDrone();
 */
+
+}
+
+void MainWindow::listenController()
+{
+
+    log("start Controller thread", false);
+    this->droneInputThread = std::thread(& MainWindow::droneInput,this);
+
+
+}
+
+void MainWindow::updatePTZCo()
+{
+    int n = ui->PTZCo->text().toInt();
+    PTZCo = n;
 
 }
 
@@ -929,6 +951,58 @@ float MainWindow::requestLoadSpeed(int n , RotationDirection dir){
 
     return fed.data;
 }
+
+
+void MainWindow::droneInput() {
+    struct sockaddr_in address, clientInfo;
+    int opt = 1;
+    int addrlen = sizeof(struct sockaddr_in);
+    int fd , new_socket;
+    Drone::Vector vec = {0,0,0};
+    // Creating socket file descriptor
+    if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
+        log("socket failed","PTZSImulator::droneInput");
+    }
+
+    // Forcefully attaching socket to the port 8080
+
+    address.sin_family = AF_INET;
+    if(inet_pton(AF_INET, "127.0.0.1", &address.sin_addr)<=0)
+    {
+        log("Invalid Address",true);
+    }
+    address.sin_port = htons(5544);
+
+    if (bind(fd, (struct sockaddr *)&address,sizeof(address))<0)
+    {
+        log("Bind Error",true);
+    }
+    if (listen(fd, 100) < 0)
+    {
+        log("Error While Listening",true);
+    }
+    while (1){
+    if((new_socket = accept(fd, (struct sockaddr *)&clientInfo,(socklen_t*)&addrlen))<0)
+    {
+        log("Cant Accept Connection",true);
+    }
+
+    log("Accept Controller",false);// << std::endl;
+    while(read( new_socket , (char*)&vec, sizeof(vec)) > 0){
+
+
+        qDebug() << "PTZCo :  " << PTZCo+1 << " Az:" << vec.x_vec*PTZs[PTZCo]->maxAzimuthAnglurSpeed << " Ele: " << vec.y_vec*PTZs[PTZCo]->maxElevationAnglurSpeed ;
+        setPTZSpeed(PTZCo+1,Azimuth,vec.x_vec*PTZs[PTZCo]->maxAzimuthAnglurSpeed);
+        setPTZSpeed(PTZCo+1,Elevation,vec.y_vec*PTZs[PTZCo]->maxElevationAnglurSpeed);
+
+
+    }
+    }
+    log("End of Controller Connection",false);
+}
+
+
 
 MainWindow::~MainWindow()
 {

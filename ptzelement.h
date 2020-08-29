@@ -85,6 +85,8 @@ public:
     void updateVelocityParameters(float elapsed,float dist);
     float motionFunction(float dd);
     float  calculateBearing(float x , float y);
+    float  calculateTheta(float x , float y);
+    float error(float a, float b);
     float calculateOrbitalVelocity(int isBearing ,QPointF a,QPointF b);
     double cubeRoot(double x);
     bool approx(float a ,float b);
@@ -140,7 +142,7 @@ public:
     QtCharts::QValueAxis AY;
     QtCharts::QValueAxis AX2;
     QtCharts::QValueAxis AY2;
-
+    double prevAzm = 0,prevEle = 0 , dAzm = 0, dEle = 0;
     bool isfirstPointInPredection = true;
 private:
 

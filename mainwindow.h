@@ -26,6 +26,8 @@ public slots :
     void sendCustomePacket();
     void connectButtonStateMachine();
     void retrevePTZsInformation();
+    void listenController();
+    void updatePTZCo();
      // void addMarker();
     void updateRefreshRate();
     void toggleAutoMode();
@@ -67,7 +69,8 @@ private:
     QGraphicsView view;
     QtCharts::QChartView chartView;
     QtCharts::QChartView chartSpeedView;
-
+    std::thread droneInputThread;
+    int PTZCo = 0;
 private:
       int disconnectFromServer();
       int connectToServer();
@@ -76,7 +79,7 @@ private:
       void initPTZs();
       void initDrone();
       void deletePTZs();
-
+      void droneInput();
       Packet::pktFeedback sendPacket(Packet::pktCommand * cmd);
       void addPTZ();
       void setTargetAngle(int n,RotationDirection dir ,float angle);

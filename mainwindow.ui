@@ -84,7 +84,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>5</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="PTZsTap">
            <attribute name="title">
@@ -109,7 +109,7 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>517</width>
+                   <width>572</width>
                    <height>272</height>
                   </rect>
                  </property>
@@ -291,6 +291,51 @@
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="tab_2">
+           <attribute name="title">
+            <string>Controller</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_24">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_23">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_22">
+                <item>
+                 <widget class="QLineEdit" name="PTZCo"/>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="updatePTZCo">
+                  <property name="text">
+                   <string>update</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QPushButton" name="CoListen">
+                <property name="text">
+                 <string>Start Listening</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
           <widget class="QWidget" name="CustomPacketTap">
            <attribute name="title">
             <string>Custom Packet</string>
@@ -315,7 +360,7 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>481</width>
+                    <width>536</width>
                     <height>182</height>
                    </rect>
                   </property>
@@ -464,7 +509,7 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>481</width>
+                    <width>536</width>
                     <height>250</height>
                    </rect>
                   </property>
@@ -703,7 +748,7 @@
                <property name="geometry">
                 <rect>
                  <x>0</x>
-                 <y>-53</y>
+                 <y>0</y>
                  <width>581</width>
                  <height>353</height>
                 </rect>

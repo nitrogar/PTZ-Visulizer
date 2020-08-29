@@ -60,7 +60,7 @@ private:
     SceneType scene_type = XY;
     QGraphicsView * view;
     float unitToMeter = 1;
-    float altTometer = 30;
+    float altTometer = 20;
     float circuitRaduis = 40;
 
 };
